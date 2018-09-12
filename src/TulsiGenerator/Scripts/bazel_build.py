@@ -1433,7 +1433,7 @@ class BazelBuildBridge(object):
         # If we had multiple remappings, it would not make sense for the
         # two APIs to share the same mappings. They have very different
         # side-effects in how they individually handle debug information.
-        source_map = self._ExtractTargetSourceMap()
+        source_map = self._ExtractCachableTargetSourceMap()
         out.write('# This maps Bazel\'s execution root to that used by '
                   '%r.\n' % os.path.basename(self.project_file_path))
 
@@ -1588,7 +1588,7 @@ class BazelBuildBridge(object):
     # Retrieve the paths that we are expected to remap.
 
     # Always include a direct path from the execroot to Xcode-visible sources.
-    source_maps = [self._ExtractTargetSourceMap()]
+    source_maps = [self._ExtractCachableTargetSourceMap()]
 
     # Remap relative paths from the workspace root.
     if self.normalized_prefix_map:
@@ -1633,6 +1633,19 @@ class BazelBuildBridge(object):
       str: a normalized string with a trailing slash, based on |path|.
     """
     return os.path.normpath(path) + os.sep
+
+  def _ExtractCachableTargetSourceMap(self, normalize=True):
+      """ Return a cacheable source Map
+      Expect all builds to write the same debug info to all object files
+      """
+      # Map the local sources to the __BAZEL_WORKSPACE_DIR__
+      # TODO:[XCHammer] if upstrem remove
+      # Additionally consider:
+      # - Renaming this to something Bazel-ish
+      # - Proposing this to Bazel/Tulsi
+      # This relies on a custom toolchain
+      cache_dir = "/__SHARED_CACHABLE_PINTEREST_BAZEL_WORKSPACE_DIR__"
+      return (cache_dir, self.workspace_root)
 
   def _ExtractTargetSourceMap(self, normalize=True):
     """Extracts the source path as a tuple associated with the WORKSPACE path.
