@@ -147,17 +147,22 @@ public final class RuleEntry: RuleInfo {
   /// Encyclopedia (see http://bazel.build/docs/be/overview.html).
   // Note: This set of must be kept in sync with the tulsi_aspects aspect.
   public enum Attribute: String {
+    case archives
+    case binary
     case bridging_header
     // Contains defines that were specified by the user on the commandline or are built into
     // Bazel itself.
     case compiler_defines
     case copts
     case datamodels
+    case entitlements
     case enable_modules
     case has_swift_dependency
     case has_swift_info
+    case is_dynamic
     case launch_storyboard
     case pch
+    case provisioning_profile
     case swift_language_version
     case swift_toolchain
     case swiftc_opts
@@ -168,6 +173,10 @@ public final class RuleEntry: RuleInfo {
     // For the {platform}_unit_test and {platform}_ui_test rules, contains a label reference to the
     // ios_application target to be used as the test host when running the tests.
     case test_host
+    case sdk_frameworks
+    case sdk_dylibs
+    case structured_resources
+    case weak_sdk_frameworks
   }
 
   /// Bazel attributes for this rule (e.g., "binary": <some label> on an ios_application).

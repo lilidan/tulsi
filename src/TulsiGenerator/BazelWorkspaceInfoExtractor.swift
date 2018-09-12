@@ -17,7 +17,7 @@ import Foundation
 
 // Concrete extractor that utilizes Bazel query (http://bazel.build/docs/query.html) and aspects to
 // extract information from a workspace.
-final class BazelWorkspaceInfoExtractor: BazelWorkspaceInfoExtractorProtocol {
+public final class BazelWorkspaceInfoExtractor: BazelWorkspaceInfoExtractorProtocol {
   var bazelURL: URL {
     get { return queryExtractor.bazelURL as URL }
     set {
@@ -27,12 +27,12 @@ final class BazelWorkspaceInfoExtractor: BazelWorkspaceInfoExtractorProtocol {
   }
 
   /// Returns the workspace relative path to the bazel bin symlink. Note that this may block.
-  var bazelBinPath: String {
+  public var bazelBinPath: String {
     return workspacePathInfoFetcher.getBazelBinPath()
   }
 
   /// Returns the absolute path to the execution root of this Bazel workspace. This may block.
-  var bazelExecutionRoot: String {
+  public var bazelExecutionRoot: String {
     return workspacePathInfoFetcher.getExecutionRoot()
   }
 
@@ -51,7 +51,7 @@ final class BazelWorkspaceInfoExtractor: BazelWorkspaceInfoExtractorProtocol {
   // Cache of all RuleEntry instances loaded for the associated project.
   private var ruleEntryCache = RuleEntryMap()
 
-  init(bazelURL: URL, workspaceRootURL: URL, localizedMessageLogger: LocalizedMessageLogger) {
+  public init(bazelURL: URL, workspaceRootURL: URL, localizedMessageLogger: LocalizedMessageLogger) {
     let universalFlags: BazelFlags
     // Install to ~/Library/Application Support when not running inside a test.
     if let applicationSupport = ApplicationSupport() {
@@ -94,7 +94,7 @@ final class BazelWorkspaceInfoExtractor: BazelWorkspaceInfoExtractorProtocol {
     return queryExtractor.extractTargetRulesFromPackages(project.bazelPackages)
   }
 
-  func ruleEntriesForLabels(_ labels: [BuildLabel],
+  public func ruleEntriesForLabels(_ labels: [BuildLabel],
                             startupOptions: TulsiOption,
                             extraStartupOptions: TulsiOption,
                             buildOptions: TulsiOption,
