@@ -1433,7 +1433,7 @@ class BazelBuildBridge(object):
         # If we had multiple remappings, it would not make sense for the
         # two APIs to share the same mappings. They have very different
         # side-effects in how they individually handle debug information.
-        source_map = self._ExtractCachableTargetSourceMap()
+        source_map = self._ExtractTargetSourceMap()
         out.write('# This maps Bazel\'s execution root to that used by '
                   '%r.\n' % os.path.basename(self.project_file_path))
 
@@ -1588,7 +1588,7 @@ class BazelBuildBridge(object):
     # Retrieve the paths that we are expected to remap.
 
     # Always include a direct path from the execroot to Xcode-visible sources.
-    source_maps = [self._ExtractCachableTargetSourceMap()]
+    source_maps = [self._ExtractTargetSourceMap()]
 
     # Remap relative paths from the workspace root.
     if self.normalized_prefix_map:
@@ -1662,6 +1662,9 @@ class BazelBuildBridge(object):
                   the paths to Xcode-visible sources used for the purposes
                   of Tulsi debugging as strings ($1).
     """
+    if os.environ.get('TULSI_USE_PIN_DEBUG_CONFIG', 'NO') == 'YES':
+      return self._ExtractCachableTargetSourceMap(normalize=normalize)
+
     # All paths route to the "workspace root" for sources visible from Xcode.
     sm_destpath = self.workspace_root
     if normalize:
