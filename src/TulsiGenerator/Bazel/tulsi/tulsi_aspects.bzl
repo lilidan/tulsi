@@ -757,7 +757,6 @@ def _tulsi_sources_aspect(target, ctx):
         datamodels = datamodels,
         supporting_files = supporting_files,
         test_host = _get_label_attr(rule_attr, "test_host.label"),
-        test_bundle = _get_label_attr(rule_attr, "test_bundle.label"),
         structured_resources=_collect_files(rule_attr, 'structured_resources'),
         archives=_extract_archives(rule_attr),
         sdk_frameworks=_get_opt_attr(rule_attr, 'sdk_frameworks'),
