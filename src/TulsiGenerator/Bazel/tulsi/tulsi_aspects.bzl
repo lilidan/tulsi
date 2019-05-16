@@ -320,7 +320,7 @@ def _collect_supporting_files(rule_attr, convert_to_metadata = True):
             attr,
             convert_to_metadata = convert_to_metadata,
             exclude_xcdatamodel = True,
-            exclude_xcassets = True,
+            exclude_xcassets = False,
         )
     return all_files
 
