@@ -176,6 +176,7 @@ public final class RuleEntry: RuleInfo {
     case sdk_frameworks
     case sdk_dylibs
     case structured_resources
+    case data
     case weak_sdk_frameworks
   }
 
