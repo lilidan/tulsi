@@ -22,6 +22,7 @@ load(
     ":tulsi/tulsi_aspects_paths.bzl",
     "AppleBundleInfo",
     "AppleTestInfo",
+    "AppleResourceInfo",
     "IosExtensionBundleInfo",
     "SwiftInfo",
 )
@@ -281,6 +282,26 @@ def _collect_artifacts(obj, attr_path, exclude_xcdatamodel = False, exclude_xcas
            (not exclude_xcassets or ".xcstickers" not in f.path)
     ]
 
+def _collect_resource_files(
+        obj,
+        attr_path,
+        convert_to_metadata = True,
+        exclude_xcdatamodel = False,
+        exclude_xcassets = False):
+        """Collects unprocessed resource files"""
+        resources = []
+        for obj in _getattr_as_list(obj, attr_path):
+            if AppleResourceInfo in obj:
+                ari = obj[AppleResourceInfo]
+                if not hasattr(ari, "unprocessed"):
+                    continue
+                for info in ari.unprocessed:
+                    for f in info[2].to_list():
+                        if ".bundle" in f.path:
+                             continue
+                        resources.append(_file_metadata(f))
+        return resources
+
 def _collect_files(
         obj,
         attr_path,
@@ -295,6 +316,7 @@ def _collect_files(
             exclude_xcdatamodel = exclude_xcdatamodel,
             exclude_xcassets = exclude_xcassets,
         )]
+
     else:
         return _collect_artifacts(
             obj,
@@ -749,6 +771,7 @@ def _tulsi_sources_aspect(target, ctx):
     datamodels = _collect_xcdatamodeld_files(rule_attr, "datamodels")
     datamodels.extend(_collect_xcdatamodeld_files(rule_attr, "data"))
 
+    structured_resources=_collect_resource_files(rule_attr, 'data')
     # Keys for attribute and inheritable_attributes keys must be kept in sync
     # with defines in Tulsi's RuleEntry.
     attributes = _dict_omitting_none(
@@ -757,8 +780,7 @@ def _tulsi_sources_aspect(target, ctx):
         datamodels = datamodels,
         supporting_files = supporting_files,
         test_host = _get_label_attr(rule_attr, "test_host.label"),
-        structured_resources=_collect_files(rule_attr, 'structured_resources'),
-        data=_collect_files(rule_attr, 'data'),
+        structured_resources=structured_resources,
         archives=_extract_archives(rule_attr),
         sdk_frameworks=_get_opt_attr(rule_attr, 'sdk_frameworks'),
         sdk_dylibs=_get_opt_attr(rule_attr, 'sdk_dylibs'),
