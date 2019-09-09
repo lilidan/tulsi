@@ -24,6 +24,7 @@ load(
     "AppleBundleInfo",
     "AppleTestInfo",
     "AppleResourceInfo",
+    "AppleResourceBundleInfo",
     "IosExtensionBundleInfo",
     "SwiftInfo",
 )
@@ -285,23 +286,33 @@ def _collect_artifacts(obj, attr_path, exclude_xcdatamodel = False, exclude_xcas
 
 def _collect_resource_files(
         obj,
-        attr_path,
-        convert_to_metadata = True,
-        exclude_xcdatamodel = False,
-        exclude_xcassets = False):
-        """Collects unprocessed resource files"""
+        attr_path):
+    """Collects unprocessed resource files, bundles are handled elsewhere"""
+    resources = []
+    for obj in _getattr_as_list(obj, attr_path):
+        if AppleResourceBundleInfo in obj:
+            continue
+        if AppleResourceInfo in obj:
+            ari = obj[AppleResourceInfo]
+            if not hasattr(ari, "unprocessed"):
+                continue
+            for info in ari.unprocessed:
+                for f in info[2].to_list():
+                    if ".bundle" in f.path:
+                         continue
+                    resources.append(_file_metadata(f))
+    return resources
+
+def _collect_bundle_targets(
+        obj,
+        attr_path):
+        """Collects bundle targets"""
         resources = []
         for obj in _getattr_as_list(obj, attr_path):
-            if AppleResourceInfo in obj:
-                ari = obj[AppleResourceInfo]
-                if not hasattr(ari, "unprocessed"):
-                    continue
-                for info in ari.unprocessed:
-                    for f in info[2].to_list():
-                        if ".bundle" in f.path:
-                             continue
-                        resources.append(_file_metadata(f))
+            if AppleResourceBundleInfo in obj:
+                resources.append(obj)
         return resources
+
 
 def _collect_files(
         obj,
@@ -386,11 +397,29 @@ def _collect_asset_catalogs(rule_attr):
 
 def _collect_bundle_imports(rule_attr):
     """Extracts bundle directories from the given rule attributes."""
-    return _collect_bundle_paths(
+    
+    bundle_paths = _collect_bundle_paths(
         rule_attr,
         ["bundle_imports", "settings_bundle"],
         ".bundle",
     )
+    # Consider if it's possible to remove the above code
+    bundle_targets=_collect_bundle_targets(rule_attr, 'data')
+    unprocessed_bundle_resources = []
+    for t in bundle_targets:
+        unprocessed_bundle_resources.extend(_collect_unprocessed_resource_files(t))
+    return bundle_paths + unprocessed_bundle_resources
+
+def _collect_unprocessed_resource_files(target):
+    obj = target
+    ari = obj[AppleResourceInfo]
+    resources = []
+    if not hasattr(ari, "unprocessed"):
+        return []
+    for info in ari.unprocessed:
+        for f in info[2].to_list():
+            resources.append(_file_metadata(f))
+    return resources
 
 def _collect_framework_imports(rule_attr):
     """Extracts framework directories from the given rule attributes."""

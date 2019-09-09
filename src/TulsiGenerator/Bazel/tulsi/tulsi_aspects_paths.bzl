@@ -22,7 +22,8 @@ load(
     _AppleBinaryInfo = "AppleBinaryInfo",
     _AppleBundleInfo = "AppleBundleInfo",
     _IosExtensionBundleInfo = "IosExtensionBundleInfo",
-    _AppleResourceInfo = "AppleResourceInfo"
+    _AppleResourceInfo = "AppleResourceInfo",
+    _AppleResourceBundleInfo = "AppleResourceBundleInfo"
 )
 load(
     "@build_bazel_rules_apple//apple/testing:apple_test_rules.bzl",
@@ -41,6 +42,7 @@ AppleBundleInfo = _AppleBundleInfo
 AppleTestInfo = _AppleTestInfo
 
 AppleResourceInfo = _AppleResourceInfo
+AppleResourceBundleInfo = _AppleResourceBundleInfo
 
 IosExtensionBundleInfo = _IosExtensionBundleInfo
 
