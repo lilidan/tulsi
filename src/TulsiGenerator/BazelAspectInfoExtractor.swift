@@ -238,6 +238,9 @@ final public class BazelAspectInfoExtractor: QueuedLogging {
                                                    messageLogger: localizedMessageLogger,
                                                    loggingIdentifier: "bazel_extract_source_info") {
       completionInfo in
+        // Write bazel output to standard error
+        FileHandle.standardError.write(completionInfo.stderr)
+
         let debugInfoFormatString = NSLocalizedString("DebugInfoForBazelCommand",
                                                       bundle: Bundle(for: type(of: self)),
                                                       comment: "Provides general information about a Bazel failure; a more detailed error may be reported elsewhere. The Bazel command is %1$@, exit code is %2$d, stderr %3$@.")
