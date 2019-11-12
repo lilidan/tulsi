@@ -736,7 +736,10 @@ class BazelBuildBridge(object):
           output_line = '%s: %s' % (xcode_label, match.group(2))
       return output_line
 
-    if self.workspace_root != self.project_dir:
+    patch_xcode_parsable_line = PatchBazelWarningStatements
+    # Always patch outputs for XCHammer.
+    # if self.workspace_root != self.project_dir:
+    if True:
       # Match (likely) filename:line_number: lines.
       xcode_parsable_line_regex = re.compile(r'([^/][^:]+):\d+:')
 
