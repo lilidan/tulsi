@@ -217,17 +217,17 @@ public struct XCHammerAspectInfoExtractor {
         } catch {
           errorInfo = "Unexpected exception"
         }
-        fatalError("Cannot parse aspects")
+        // Currently, there is an issue with the way that the xcode_project rule
+        // generates input data for extensions.
+        // TODO: It needs more work to fix this, and this should likely be
+        // fatal
+        print("INFO: missing aspect: " + filename)
         hasErrors = true
       }
     }
 
     // Wait for everything to be processed.
     queue.sync(flags: .barrier, execute: {})
-
-    if hasErrors {
-      fatalError("XCHammer Aspect Parsing failed")
-    }
     return ruleEntryMap
   }
 }
