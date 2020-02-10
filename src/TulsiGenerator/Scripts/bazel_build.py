@@ -212,8 +212,6 @@ class CodesignBundleAttributes(object):
 class _OptionsParser(object):
   """Handles parsing script options."""
 
-  # List of all supported Xcode configurations.
-  KNOWN_CONFIGS = ['Debug', 'Release']
 
   def __init__(self, build_settings, sdk_version, platform_name, arch):
     self.targets = []
@@ -650,10 +648,6 @@ class BazelBuildBridge(object):
       _PrintXcodeError('Building test targets with configuration "%s" is not '
                        'allowed. Please use the "Test" action or "Build for" > '
                        '"Testing" instead.' % configuration)
-      return (None, 1)
-
-    if configuration not in _OptionsParser.KNOWN_CONFIGS:
-      _PrintXcodeError('Unknown build configuration "%s"' % configuration)
       return (None, 1)
 
     bazel, start_up, build = options.GetBazelOptions(configuration)
