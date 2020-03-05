@@ -36,6 +36,9 @@ public struct XCHammerAspectInfoExtractor {
       guard let data = fileManager.contents(atPath: filename) else {
         throw ExtractorError.parsingFailed("The file could not be read")
       }
+
+      // FIXME: see lower comment regarding the aspect
+      // print("JSON from", filename)
       guard let dict = try JSONSerialization.jsonObject(with: data, options: JSONSerialization.ReadingOptions()) as? [String: AnyObject] else {
         throw ExtractorError.parsingFailed("Contents are not a dictionary")
       }
@@ -147,11 +150,22 @@ public struct XCHammerAspectInfoExtractor {
 
       let isiOSAppExtension = targetProductType?.isiOSAppExtension
       if isiOSAppExtension ?? false, let infoplistPath = dict["infoplist"] as? String {
-        let plistPath = executionRootURL.appendingPathComponent(infoplistPath).path
-        guard let info = NSDictionary(contentsOfFile: plistPath) else {
-          throw ExtractorError.parsingFailed("Unable to load extension plist file: \(plistPath)")
+        
+        // In certian cases, we'll read the plist from the execroot.
+        let plistPath: String
+        if FileManager.default.fileExists(atPath: infoplistPath) {
+            plistPath = infoplistPath
+        } else {
+            plistPath = executionRootURL.appendingPathComponent(infoplistPath).path
         }
+        let data = try Data(contentsOf: URL(fileURLWithPath: plistPath))
+        let plistRes = try PropertyListSerialization.propertyList(from: data,
+            options: PropertyListSerialization.MutabilityOptions.mutableContainers,
+            format: nil)
 
+        guard let info = plistRes as? NSDictionary else {
+          throw ExtractorError.parsingFailed("invalid extension plist: \(plistPath)")
+        }
         guard let _extensionType = info.value(forKeyPath: "NSExtension.NSExtensionPointIdentifier") as? String else {
           throw ExtractorError.parsingFailed("Missing NSExtensionPointIdentifier in extension plist: \(plistPath)")
         }
@@ -201,7 +215,10 @@ public struct XCHammerAspectInfoExtractor {
                                       attributes: DispatchQueue.Attributes.concurrent)
     var hasErrors = false
 
-    for filename in files {
+    // FIXME: this is an issue where the aspect is feeding in info plists
+    // here.
+    let aspectFiles = files.filter { $0.hasSuffix(".tulsiinfo") }
+    for filename in aspectFiles {
       queue.async {
         let errorInfo: String
         do {
@@ -222,6 +239,7 @@ public struct XCHammerAspectInfoExtractor {
         // TODO: It needs more work to fix this, and this should likely be
         // fatal
         print("INFO: missing aspect: " + filename)
+        print("INFO: missing aspect: " + String(describing: errorInfo))
         hasErrors = true
       }
     }
