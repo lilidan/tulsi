@@ -1640,12 +1640,7 @@ class BazelBuildBridge(object):
       Expect all builds to write the same debug info to all object files
       """
       # Map the local sources to the __BAZEL_WORKSPACE_DIR__
-      # TODO:[XCHammer] if upstrem remove
-      # Additionally consider:
-      # - Renaming this to something Bazel-ish
-      # - Proposing this to Bazel/Tulsi
-      # This relies on a custom toolchain
-      cache_dir = "/__SHARED_CACHABLE_PINTEREST_BAZEL_WORKSPACE_DIR__"
+      cache_dir = "./"
       return (cache_dir, self.workspace_root)
 
   def _ExtractTargetSourceMap(self, normalize=True):
@@ -1663,7 +1658,7 @@ class BazelBuildBridge(object):
                   the paths to Xcode-visible sources used for the purposes
                   of Tulsi debugging as strings ($1).
     """
-    if os.environ.get('TULSI_USE_PIN_DEBUG_CONFIG', 'NO') == 'YES':
+    if os.environ.get('HAMMER_USE_DEBUG_INFO_REMAPPING', 'NO') == 'YES':
       return self._ExtractCachableTargetSourceMap(normalize=normalize)
 
     # All paths route to the "workspace root" for sources visible from Xcode.
