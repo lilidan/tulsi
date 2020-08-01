@@ -626,7 +626,7 @@ def _extract_archives(target):
   if not archives:
       return file_metadatas
   for ar in archives:
-      for f in ar.files:
+      for f in ar.files.to_list():
           file_metadatas.append(_file_metadata(f))
   return file_metadatas
 
