@@ -815,6 +815,13 @@ class BazelBuildBridge(object):
       outputs_data.append(output_data)
     return 0, outputs_data
 
+  def _GetBundleSourceLocation(self, artifact_archive_root, bundle_subpath):
+    if not artifact_archive_root or not bundle_subpath:
+      return None
+
+    source_location = os.path.join(artifact_archive_root, bundle_subpath)
+    return source_location if os.path.isdir(source_location) else None
+
   def _InstallArtifact(self, outputs_data):
     """Installs Bazel-generated artifacts into the Xcode output directory."""
     xcode_artifact_path = self.artifact_output_path
@@ -863,8 +870,12 @@ class BazelBuildBridge(object):
       # ipa/zip in order to help preserve timestamps. Note that the archive root
       # is only present for local builds; for remote builds we must extract from
       # the zip file.
-      if self._IsValidArtifactArchiveRoot(artifact_archive_root, bundle_name):
-        source_location = os.path.join(artifact_archive_root, bundle_subpath)
+      source_location = self._GetBundleSourceLocation(artifact_archive_root, bundle_subpath)
+      if source_location:
+        exit_code = self._RsyncBundle(os.path.basename(primary_artifact),
+                                      source_location,
+                                      xcode_artifact_path)
+      elif self._IsValidArtifactArchiveRoot(artifact_archive_root, bundle_name):
         exit_code = self._RsyncBundle(os.path.basename(primary_artifact),
                                       source_location,
                                       xcode_artifact_path)
@@ -1083,14 +1094,12 @@ class BazelBuildBridge(object):
       full_source_path += '/'
 
     try:
-      # Use -c to check differences by checksum, -v for verbose,
-      # and --delete to delete stale files.
+      # Use -c to check differences by checksum, -v for verbose
       # The rest of the flags are the same as -a but without preserving
       # timestamps, which is done intentionally so the timestamp will
       # only change when the file is changed.
       subprocess.check_output(['rsync',
                                '-vcrlpgoD',
-                               '--delete',
                                full_source_path,
                                output_path],
                               stderr=subprocess.STDOUT)
