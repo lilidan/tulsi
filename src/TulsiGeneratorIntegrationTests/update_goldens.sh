@@ -17,7 +17,7 @@ set -eu
 
 # Update this whenever the version of Xcode needed to generate the goldens
 # changes.
-readonly XCODE_VERSION=11.2.1
+readonly XCODE_VERSION=12.4
 
 readonly WORKSPACE=$(bazel info workspace)
 readonly TEST_PATH="src/TulsiGeneratorIntegrationTests"
@@ -26,7 +26,8 @@ readonly TESTLOGS_DIR=$(bazel info bazel-testlogs)
 readonly OUTPUT_DIR="${TESTLOGS_DIR}/${TEST_PATH}"
 
 bazel test //src/TulsiGeneratorIntegrationTests:EndToEndGenerationTests \
-  --xcode_version="$XCODE_VERSION" --nocheck_visibility && :
+  --xcode_version="$XCODE_VERSION" --nocheck_visibility \
+  --use_top_level_targets_for_symlinks && :
 
 bazel_exit_code=$?
 

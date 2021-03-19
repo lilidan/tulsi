@@ -1,7 +1,5 @@
 # Tulsi - an Xcode Project Generator For Bazel
 
-[![Build Status](https://travis-ci.org/bazelbuild/tulsi.svg?branch=master)](https://travis-ci.org/bazelbuild/tulsi)
-
 <span style="background-color:OldLace; padding:10px">
 tulsi - /ˈto͝olsē/  A kind of basil that is venerated by Hindus as a sacred
 plant.
@@ -9,18 +7,20 @@ plant.
 
 ## Building and installing
 
-1.  Check `.bazelrc` to see if the Xcode version used by Tulsi is installed
-    locally. If it isn't, feel free to remove the `--xcode_version` flag or
-    modify it as you wish, but note that Tulsi may not build correctly with
-    different versions of Xcode.
-1.  Run `build_and_run.sh`. This will install Tulsi.app inside ~/Applications.
+Run `build_and_run.sh`. This will install Tulsi.app inside `$HOME/Applications` by default. See below for supported options:
+
+* `-b`: Bazel binary that Tulsi should use to build and install the app (Default is `bazel`)
+* `-d`: The folder where to install the Tulsi app into (Default is `$HOME/Applications`)
+* `-x`: The Xcode version Tulsi should be built for (Default is `12.4`)
 
 
 ## Notes
 
-Tulsi-generated Xcode projects use Bazel to build, **not** Xcode via xcbuild. This means
-that many common components of an Xcode project are handled differently than you
-may be used to. Notable differences:
+Tulsi-generated Xcode projects use Bazel to build, **not** Xcode.  Building in
+Xcode will cause it to only run a script; the script invokes Bazel to build
+the configured Bazel target and copies the artifacts to where Xcode expects
+them to be. This means that many common components of an Xcode project are
+handled differently than you may be used to. Notable differences:
 
 *   **BUILD files are the source of truth**; most changes made to your Xcode project
     won't affect the build.

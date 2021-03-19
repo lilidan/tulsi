@@ -193,9 +193,9 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
 
   func testGenerateBazelCleanTargetAppliesToRulesAddedBeforeAndAfter() {
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
         [makeTestRuleEntry("before", type: "ios_application", productType: .Application)],
-        ruleEntryMap: RuleEntryMap())
+        ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -203,9 +203,9 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     targetGenerator.generateBazelCleanTarget("scriptPath")
 
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
         [makeTestRuleEntry("after", type: "ios_application", productType: .Application)],
-        ruleEntryMap: RuleEntryMap())
+        ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -349,7 +349,8 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
 
   func testGenerateTargetsForRuleEntriesWithNoEntries() {
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries([], ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        [], ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -371,7 +372,8 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     ])
 
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(rules, ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -456,6 +458,107 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     }
   }
 
+  func testGenerateTargetsForRuleEntriesWithAppClips() {
+    let rule1BuildPath = "test/app"
+    let rule1TargetName = "TestApplication"
+    let rule1BuildTarget = "\(rule1BuildPath):\(rule1TargetName)"
+    let rule2BuildPath = "test/appclip"
+    let rule2TargetName = "TestAppClip"
+    let rule2BuildTarget = "\(rule2BuildPath):\(rule2TargetName)"
+
+    let rules = Set([
+      makeTestRuleEntry(rule1BuildTarget, type: "ios_application", appClips: Set([BuildLabel(rule2BuildTarget)]), productType: .Application),
+      makeTestRuleEntry(rule2BuildTarget, type: "ios_app_clip", productType: .AppClip),
+    ])
+
+    do {
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
+    } catch let e as NSError {
+      XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
+    }
+
+    let topLevelConfigs = project.buildConfigurationList.buildConfigurations
+    XCTAssertEqual(topLevelConfigs.count, 0)
+
+    let targets = project.targetByName
+    XCTAssertEqual(targets.count, 2)
+
+    do {
+      let expectedBuildSettings = [
+        "ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME": "Stub Launch Image",
+        "BAZEL_TARGET": "test/app:TestApplication",
+        "DEBUG_INFORMATION_FORMAT": "dwarf",
+        "INFOPLIST_FILE": stubPlistPaths.defaultStub,
+        "PRODUCT_NAME": rule1TargetName,
+        "SDKROOT": "iphoneos",
+        "TULSI_BUILD_PATH": rule1BuildPath,
+      ]
+      let expectedTarget = TargetDefinition(
+        name: rule1TargetName,
+        buildConfigurations: [
+          BuildConfigurationDefinition(
+            name: "Debug",
+            expectedBuildSettings: debugBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "Release",
+            expectedBuildSettings: releaseBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "__TulsiTestRunner_Debug",
+            expectedBuildSettings: debugTestRunnerBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "__TulsiTestRunner_Release",
+            expectedBuildSettings: releaseTestRunnerBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+        ],
+        expectedBuildPhases: [
+          BazelShellScriptBuildPhaseDefinition(bazelPath: bazelPath, buildTarget: rule1BuildTarget),
+        ]
+      )
+      assertTarget(expectedTarget, inTargets: targets)
+    }
+    do {
+      let expectedBuildSettings = [
+        "ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME": "Stub Launch Image",
+        "BAZEL_TARGET": "test/appclip:TestAppClip",
+        "CODE_SIGNING_ALLOWED": "NO",
+        "DEBUG_INFORMATION_FORMAT": "dwarf",
+        "INFOPLIST_FILE": stubPlistPaths.defaultStub,
+        "PRODUCT_NAME": rule2TargetName,
+        "SDKROOT": "iphoneos",
+        "TULSI_BUILD_PATH": rule2BuildPath,
+      ]
+      let expectedTarget = TargetDefinition(
+        name: rule2TargetName,
+        buildConfigurations: [
+          BuildConfigurationDefinition(
+            name: "Debug",
+            expectedBuildSettings: debugBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "Release",
+            expectedBuildSettings: releaseBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "__TulsiTestRunner_Debug",
+            expectedBuildSettings: debugTestRunnerBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "__TulsiTestRunner_Release",
+            expectedBuildSettings: releaseTestRunnerBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+        ],
+        expectedBuildPhases: [
+          BazelShellScriptBuildPhaseDefinition(bazelPath: bazelPath, buildTarget: rule2BuildTarget),
+        ]
+      )
+      assertTarget(expectedTarget, inTargets: targets)
+    }
+  }
+
   func testGenerateTargetsForLinkedRuleEntriesWithNoSourcesAndSkylarkUnitTest() {
     checkGenerateTargetsForLinkedRuleEntriesWithNoSources(
       "ios_unit_test",
@@ -487,7 +590,8 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     ])
 
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(rules, ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -599,7 +703,8 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     ])
 
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(rules, ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -715,7 +820,8 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     ])
 
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(rules, ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -834,7 +940,8 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     ])
 
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(rules, ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -939,7 +1046,8 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     ])
 
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(rules, ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -991,24 +1099,27 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     }
   }
 
-  func testGenerateTargetWithSourcesNoHostMacOSUnitTests() {
+  func testGenerateTargetWithFilteredSourcesNoHostMacOSUnitTests() {
     let testRuleType = "ios_unit_test"
     let rule1BuildPath = "test/testbundle"
     let rule1TargetName = "TestBundle"
     let rule1BuildTarget = "\(rule1BuildPath):\(rule1TargetName)"
-    let testSources = ["test/src1.m", "test/src2.m"]
+    let projectTestSources = ["test/src1.m", "test/src2.m"]
+    let allTestSources = projectTestSources + ["some/other/src.c"]
+    let testPathFilters: Set<String> = ["test/..."]
     let rules = Set([
       makeTestRuleEntry(
         rule1BuildTarget,
         type: testRuleType,
-        sourceFiles: testSources,
+        sourceFiles: allTestSources,
         productType: .UnitTest,
         platformType: "macos",
         osDeploymentTarget: "10.11"),
     ])
 
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(rules, ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: testPathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -1054,7 +1165,7 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
         ],
         expectedBuildPhases: [
           BazelShellScriptBuildPhaseDefinition(bazelPath: bazelPath, buildTarget: rule1BuildTarget),
-          SourcesBuildPhaseDefinition(files: testSources, mainGroup: project.mainGroup),
+          SourcesBuildPhaseDefinition(files: projectTestSources, mainGroup: project.mainGroup),
           ObjcDummyShellScriptBuildPhaseDefinition(),
         ]
       )
@@ -1095,7 +1206,8 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
       testRule,
     ])
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(rules, ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -1193,6 +1305,7 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     let testHostTargetName = "App"
     let testRulePackage = "test/app"
     let testSources = ["test/app/Tests.m"]
+    let testPathFilters: Set<String> = ["test/..."]
     let objcLibraryRuleEntry = makeTestRuleEntry(
       "\(testRulePackage):ObjcLib",
       type: "objc_library",
@@ -1216,9 +1329,9 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     ])
 
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
         [testRuleEntry, testHostRuleEntry],
-        ruleEntryMap: ruleEntryMap)
+        ruleEntryMap: ruleEntryMap, pathFilters: testPathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -1277,6 +1390,7 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     let testHostTargetName = "App"
     let testRulePackage = "test/app"
     let testSources = ["test/app/Tests.swift"]
+    let testPathFilters: Set<String> = ["test/..."]
     let swiftLibraryRuleEntry = makeTestRuleEntry(
       "\(testRulePackage):SwiftLib",
       type: "swift_library",
@@ -1303,9 +1417,9 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     ])
 
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
         [testRuleEntry, testHostRuleEntry],
-        ruleEntryMap: ruleEntryMap)
+        ruleEntryMap: ruleEntryMap, pathFilters: testPathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -1391,7 +1505,8 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
       testRule,
     ])
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(rules, ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -1532,7 +1647,8 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
       test2Rule,
     ])
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(rules, ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -1567,8 +1683,8 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
       sourceFiles: testSources,
       productType: .Application)
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(
-        [testRule], ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        [testRule], ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
       return
@@ -1634,7 +1750,8 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     ])
 
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(rules, ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -1651,12 +1768,12 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
         "BAZEL_TARGET": "test/test1:\(targetName)",
         "DEBUG_INFORMATION_FORMAT": "dwarf",
         "INFOPLIST_FILE": stubPlistPaths.defaultStub,
-        "PRODUCT_NAME": "test-test1-SameName",
+        "PRODUCT_NAME": "test1-SameName",
         "SDKROOT": "iphoneos",
         "TULSI_BUILD_PATH": rule1BuildPath,
       ]
       let expectedTarget = TargetDefinition(
-        name: "test-test1-SameName",
+        name: "test1-SameName",
         buildConfigurations: [
           BuildConfigurationDefinition(
             name: "Debug",
@@ -1687,12 +1804,12 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
         "BAZEL_TARGET": "test/test2:\(targetName)",
         "DEBUG_INFORMATION_FORMAT": "dwarf",
         "INFOPLIST_FILE": stubPlistPaths.defaultStub,
-        "PRODUCT_NAME": "test-test2-SameName",
+        "PRODUCT_NAME": "test2-SameName",
         "SDKROOT": "iphoneos",
         "TULSI_BUILD_PATH": rule2BuildPath,
       ]
       let expectedTarget = TargetDefinition(
-        name: "test-test2-SameName",
+        name: "test2-SameName",
         buildConfigurations: [
           BuildConfigurationDefinition(
             name: "Debug",
@@ -1733,7 +1850,8 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     ])
 
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(rules, ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -1797,7 +1915,8 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     ])
 
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(rules, ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -1819,7 +1938,7 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
         "TULSI_BUILD_PATH": buildPath,
       ]
       let expectedTarget = TargetDefinition(
-        name: targetName,
+        name: bundleName,
         buildConfigurations: [
           BuildConfigurationDefinition(
             name: "Debug",
@@ -1844,7 +1963,204 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
       )
       assertTarget(expectedTarget, inTargets: targets)
     }
+  }
 
+  func testGenerateTargetsForRuleEntriesWithTheSameBundleName() {
+    let bundleName = "test"
+    let rule1TargetName = "test1"
+    let rule1BuildPath = "test/test1"
+    let rule1BuildTarget = "\(rule1BuildPath):\(rule1TargetName)"
+    let rule2TargetName = "test2"
+    let rule2BuildPath = "test/test2"
+    let rule2BuildTarget = "\(rule2BuildPath):\(rule2TargetName)"
+    let rules = Set([
+      makeTestRuleEntry(rule1BuildTarget, type: "ios_application", bundleName: bundleName, productType: .Application),
+      makeTestRuleEntry(rule2BuildTarget, type: "ios_application", bundleName: bundleName, productType: .Application),
+    ])
+
+    do {
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
+    } catch let e as NSError {
+      XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
+    }
+
+    let topLevelConfigs = project.buildConfigurationList.buildConfigurations
+    XCTAssertEqual(topLevelConfigs.count, 0)
+
+    let targets = project.targetByName
+    XCTAssertEqual(targets.count, 2)
+
+    do {
+      let expectedBuildSettings = [
+        "ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME": "Stub Launch Image",
+        "BAZEL_TARGET": "test/test1:\(rule1TargetName)",
+        "DEBUG_INFORMATION_FORMAT": "dwarf",
+        "INFOPLIST_FILE": stubPlistPaths.defaultStub,
+        "PRODUCT_NAME": rule1TargetName,
+        "SDKROOT": "iphoneos",
+        "TULSI_BUILD_PATH": rule1BuildPath,
+      ]
+      let expectedTarget = TargetDefinition(
+        name: rule1TargetName,
+        buildConfigurations: [
+          BuildConfigurationDefinition(
+            name: "Debug",
+            expectedBuildSettings: debugBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "Release",
+            expectedBuildSettings: releaseBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "__TulsiTestRunner_Debug",
+            expectedBuildSettings: debugTestRunnerBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "__TulsiTestRunner_Release",
+            expectedBuildSettings: releaseTestRunnerBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+        ],
+        expectedBuildPhases: [
+          BazelShellScriptBuildPhaseDefinition(bazelPath: bazelPath, buildTarget: rule1BuildTarget),
+        ]
+      )
+      assertTarget(expectedTarget, inTargets: targets)
+    }
+    do {
+      let expectedBuildSettings = [
+        "ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME": "Stub Launch Image",
+        "BAZEL_TARGET": "test/test2:\(rule2TargetName)",
+        "DEBUG_INFORMATION_FORMAT": "dwarf",
+        "INFOPLIST_FILE": stubPlistPaths.defaultStub,
+        "PRODUCT_NAME": rule2TargetName,
+        "SDKROOT": "iphoneos",
+        "TULSI_BUILD_PATH": rule2BuildPath,
+      ]
+      let expectedTarget = TargetDefinition(
+        name: rule2TargetName,
+        buildConfigurations: [
+          BuildConfigurationDefinition(
+            name: "Debug",
+            expectedBuildSettings: debugBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "Release",
+            expectedBuildSettings: releaseBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "__TulsiTestRunner_Debug",
+            expectedBuildSettings: debugTestRunnerBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "__TulsiTestRunner_Release",
+            expectedBuildSettings: releaseTestRunnerBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+        ],
+        expectedBuildPhases: [
+          BazelShellScriptBuildPhaseDefinition(bazelPath: bazelPath, buildTarget: rule2BuildTarget),
+        ]
+      )
+      assertTarget(expectedTarget, inTargets: targets)
+    }
+  }
+
+  func testGenerateTargetsForRuleEntriesWithSamePotentialName() {
+    let targetAndBundleName = "test"
+    let rule1BuildPath = "test/test1"
+    let rule1BuildTarget = "\(rule1BuildPath):\(targetAndBundleName)"
+    let rule2BuildPath = "test/test2"
+    let rule2BuildTarget = "\(rule2BuildPath):\(targetAndBundleName)"
+    let rules = Set([
+      makeTestRuleEntry(rule1BuildTarget, type: "ios_application", bundleName: targetAndBundleName, productType: .Application),
+      makeTestRuleEntry(rule2BuildTarget, type: "ios_application", productType: .Application),
+    ])
+
+    do {
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
+    } catch let e as NSError {
+      XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
+    }
+
+    let topLevelConfigs = project.buildConfigurationList.buildConfigurations
+    XCTAssertEqual(topLevelConfigs.count, 0)
+
+    let targets = project.targetByName
+    XCTAssertEqual(targets.count, 2)
+
+    do {
+      let expectedBuildSettings = [
+        "ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME": "Stub Launch Image",
+        "BAZEL_TARGET": "test/test1:\(targetAndBundleName)",
+        "DEBUG_INFORMATION_FORMAT": "dwarf",
+        "INFOPLIST_FILE": stubPlistPaths.defaultStub,
+        "PRODUCT_NAME": targetAndBundleName,
+        "SDKROOT": "iphoneos",
+        "TULSI_BUILD_PATH": rule1BuildPath,
+      ]
+      let expectedTarget = TargetDefinition(
+        name: targetAndBundleName,
+        buildConfigurations: [
+          BuildConfigurationDefinition(
+            name: "Debug",
+            expectedBuildSettings: debugBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "Release",
+            expectedBuildSettings: releaseBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "__TulsiTestRunner_Debug",
+            expectedBuildSettings: debugTestRunnerBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "__TulsiTestRunner_Release",
+            expectedBuildSettings: releaseTestRunnerBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+        ],
+        expectedBuildPhases: [
+          BazelShellScriptBuildPhaseDefinition(bazelPath: bazelPath, buildTarget: rule1BuildTarget),
+        ]
+      )
+      assertTarget(expectedTarget, inTargets: targets)
+    }
+    do {
+      let expectedBuildSettings = [
+        "ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME": "Stub Launch Image",
+        "BAZEL_TARGET": "test/test2:\(targetAndBundleName)",
+        "DEBUG_INFORMATION_FORMAT": "dwarf",
+        "INFOPLIST_FILE": stubPlistPaths.defaultStub,
+        "PRODUCT_NAME": "test-test2-test",
+        "SDKROOT": "iphoneos",
+        "TULSI_BUILD_PATH": rule2BuildPath,
+      ]
+      let expectedTarget = TargetDefinition(
+        name: "test-test2-test",
+        buildConfigurations: [
+          BuildConfigurationDefinition(
+            name: "Debug",
+            expectedBuildSettings: debugBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "Release",
+            expectedBuildSettings: releaseBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "__TulsiTestRunner_Debug",
+            expectedBuildSettings: debugTestRunnerBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+          BuildConfigurationDefinition(
+            name: "__TulsiTestRunner_Release",
+            expectedBuildSettings: releaseTestRunnerBuildSettingsFromSettings(expectedBuildSettings)
+          ),
+        ],
+        expectedBuildPhases: [
+          BazelShellScriptBuildPhaseDefinition(bazelPath: bazelPath, buildTarget: rule2BuildTarget),
+        ]
+      )
+      assertTarget(expectedTarget, inTargets: targets)
+    }
   }
 
   func testGenerateWatchOSTarget() {
@@ -1889,7 +2205,8 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     ])
 
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(rules, ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -2058,7 +2375,8 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     ])
 
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(rules, ruleEntryMap: RuleEntryMap())
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
+        rules, ruleEntryMap: RuleEntryMap(), pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -2689,9 +3007,10 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     let ruleEntryMap = makeRuleEntryMap(withRuleEntries: [swiftLibraryRule])
 
     do {
-      try targetGenerator.generateBuildTargetsForRuleEntries(
+      _ = try targetGenerator.generateBuildTargetsForRuleEntries(
         [testRule],
-        ruleEntryMap: ruleEntryMap)
+        ruleEntryMap: ruleEntryMap,
+        pathFilters: pathFilters)
     } catch let e as NSError {
       XCTFail("Failed to generate build targets with error \(e.localizedDescription)")
     }
@@ -2909,6 +3228,7 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     sourceFiles: [String] = [],
     dependencies: Set<BuildLabel> = Set(),
     extensions: Set<BuildLabel>? = nil,
+    appClips: Set<BuildLabel>? = nil,
     bundleID: String? = nil,
     bundleName: String? = nil,
     productType: PBXTarget.ProductType? = nil,
@@ -2926,6 +3246,7 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
       sourceFiles: sourceFiles,
       dependencies: dependencies,
       extensions: extensions,
+      appClips: appClips,
       bundleID: bundleID,
       bundleName: bundleName,
       productType: productType,
@@ -2950,6 +3271,7 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
     sourceFiles: [String] = [],
     dependencies: Set<BuildLabel> = Set(),
     extensions: Set<BuildLabel>? = nil,
+    appClips: Set<BuildLabel>? = nil,
     bundleID: String? = nil,
     bundleName: String? = nil,
     productType: PBXTarget.ProductType? = nil,
@@ -2969,6 +3291,7 @@ class PBXTargetGeneratorTestsWithFiles: XCTestCase {
       sourceFiles: sourceInfos,
       dependencies: dependencies,
       extensions: extensions,
+      appClips: appClips,
       bundleID: bundleID,
       bundleName: bundleName,
       productType: productType,

@@ -97,7 +97,7 @@
 		25889F7C49F0A75600000000 /* HdrsHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HdrsHeader.h; path = "tulsi-workspace/tulsi_e2e_complex/Library/hdrs/HdrsHeader.h"; sourceTree = "<group>"; };
 		25889F7C510E414800000000 /* es */ = {isa = PBXFileReference; lastKnownFileType = text; name = es; path = "tulsi-workspace/tulsi_e2e_complex/Application/es.lproj/Localized.strings"; sourceTree = "<group>"; };
 		25889F7C52C027AF00000000 /* src4.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = src4.m; path = "tulsi-workspace/tulsi_e2e_complex/LibrarySources/srcs/src4.m"; sourceTree = "<group>"; };
-		25889F7C54F2E63700000000 /* BUILD */ = {isa = PBXFileReference; lastKnownFileType = text; name = BUILD; path = tulsi_e2e_complex/BUILD; sourceTree = "<group>"; };
+		25889F7C54F2E63700000000 /* BUILD */ = {isa = PBXFileReference; lastKnownFileType = text; name = BUILD; path = tulsi_e2e_complex/BUILD; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.python; };
 		25889F7C55B4D94500000000 /* src3.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = src3.m; path = "tulsi-workspace/tulsi_e2e_complex/LibrarySources/srcs/src3.m"; sourceTree = "<group>"; };
 		25889F7C5F03A4CF00000000 /* SrcsHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SrcsHeader.h; path = "tulsi-workspace/tulsi_e2e_complex/Library/srcs/SrcsHeader.h"; sourceTree = "<group>"; };
 		25889F7C631271AE00000000 /* file1 */ = {isa = PBXFileReference; lastKnownFileType = text; name = file1; path = "tulsi-workspace/tulsi_e2e_complex/TodayExtension/resources/file1"; sourceTree = "<group>"; };
@@ -128,7 +128,7 @@
 		25889F7CEDC9AFE300000000 /* en */ = {isa = PBXFileReference; lastKnownFileType = text; name = en; path = "tulsi-workspace/tulsi_e2e_complex/Application/en.lproj/Localized.strings"; sourceTree = "<group>"; };
 		25889F7CEF9CAD8A00000000 /* src.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = src.mm; path = "tulsi-workspace/tulsi_e2e_complex/SubLibraryWithDifferentDefines/srcs/src.mm"; sourceTree = "<group>"; };
 		25889F7CF3273A4100000000 /* defaultTestSource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = defaultTestSource.m; path = "tulsi-workspace/tulsi_e2e_complex/XCTest/srcs/defaultTestSource.m"; sourceTree = "<group>"; };
-		25889F7CF35FB52600000000 /* ComplexSingle.bzl */ = {isa = PBXFileReference; lastKnownFileType = com.google.bazel.skylark; name = ComplexSingle.bzl; path = tulsi_e2e_complex/ComplexSingle.bzl; sourceTree = "<group>"; };
+		25889F7CF35FB52600000000 /* ComplexSingle.bzl */ = {isa = PBXFileReference; lastKnownFileType = com.google.bazel.skylark; name = ComplexSingle.bzl; path = tulsi_e2e_complex/ComplexSingle.bzl; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.python; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -586,7 +586,7 @@
 			buildConfigurationList = F4222DED6042BF8400000000 /* Build configuration list for PBXNativeTarget "XCTest" */;
 			buildPhases = (
 				978262AB0C8B8F3600000000 /* ShellScript */,
-				978262AB87E2752000000000 /* ShellScript */,
+				978262AB11B0EB1700000000 /* ShellScript */,
 				04BFD5160000000000000000 /* Sources */,
 			);
 			buildRules = (
@@ -708,6 +708,20 @@
 			shellScript = "set -e\ncd \"${SRCROOT}/..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //tulsi_e2e_complex:XCTest --bazel \"/fake/tulsi_test_bazel\" --bazel_bin_path \"bazel-bin\" --verbose ";
 			showEnvVarsInLog = 1;
 		};
+		978262AB11B0EB1700000000 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 0;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "# Script to generate dependency files Xcode expects when running tests.\nset -eu\nARCH_ARRAY=($ARCHS)\nFILES=(SrcsHeader src5 src1 src2 src3 src4 HdrsHeader defaultTestSource)\nfor ARCH in \"${ARCH_ARRAY[@]}\"\ndo\n  mkdir -p \"$OBJECT_FILE_DIR_normal/$ARCH/\"\n  rm -f \"$OBJECT_FILE_DIR_normal/$ARCH/${PRODUCT_NAME}_dependency_info.dat\"\n  printf '\\x00\\x31\\x00' >\"$OBJECT_FILE_DIR_normal/$ARCH/${PRODUCT_NAME}_dependency_info.dat\"\n  for FILE in \"${FILES[@]}\"\n  do\n    touch \"$OBJECT_FILE_DIR_normal/$ARCH/$FILE.d\"\n  done\ndone";
+			showEnvVarsInLog = 1;
+		};
 		978262AB5E42831100000000 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 0;
@@ -721,20 +735,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "set -e\ncd \"${SRCROOT}/..\"\nexec \"${PROJECT_FILE_PATH}/.tulsi/Scripts/bazel_build.py\" //tulsi_e2e_complex:TodayExtension --bazel \"/fake/tulsi_test_bazel\" --bazel_bin_path \"bazel-bin\" --verbose ";
-			showEnvVarsInLog = 1;
-		};
-		978262AB87E2752000000000 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 0;
-			files = (
-			);
-			inputPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/bash;
-			shellScript = "# Script to generate dependency files Xcode expects when running tests.\nset -eu\nARCH_ARRAY=($ARCHS)\nFILES=(SrcsHeader src5 src1 src2 src3 src4 defaultTestSource)\nfor ARCH in \"${ARCH_ARRAY[@]}\"\ndo\n  mkdir -p \"$OBJECT_FILE_DIR_normal/$ARCH/\"\n  rm -f \"$OBJECT_FILE_DIR_normal/$ARCH/${PRODUCT_NAME}_dependency_info.dat\"\n  printf '\\x00\\x31\\x00' >\"$OBJECT_FILE_DIR_normal/$ARCH/${PRODUCT_NAME}_dependency_info.dat\"\n  for FILE in \"${FILES[@]}\"\n  do\n    touch \"$OBJECT_FILE_DIR_normal/$ARCH/$FILE.d\"\n  done\ndone";
 			showEnvVarsInLog = 1;
 		};
 		978262ABC642309A00000000 /* ShellScript */ = {
@@ -930,7 +930,7 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Application.app/Application";
 				TULSI_BUILD_PATH = tulsi_e2e_complex;
 				TULSI_TEST_RUNNER_ONLY = YES;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = __TulsiTestRunner_Release;
 		};
@@ -955,7 +955,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BUILD_PATH = tulsi_e2e_complex;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = __TulsiTestRunner_Release;
 		};
@@ -994,6 +994,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-workspace";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
 				TULSI_PROJECT = ComplexSingleProject;
 				TULSI_VERSION = 9.99.999.9999;
 				TULSI_WR = "${SRCROOT}/..";
@@ -1021,7 +1022,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BUILD_PATH = tulsi_e2e_complex;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = __TulsiTestRunner_Release;
 		};
@@ -1033,7 +1034,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ $(TULSI_WR)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				PRODUCT_BUNDLE_IDENTIFIER = example.iosappTests;
@@ -1042,7 +1043,7 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Application.app/Application";
 				TULSI_BUILD_PATH = tulsi_e2e_complex;
 				TULSI_TEST_RUNNER_ONLY = YES;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = Debug;
 		};
@@ -1059,7 +1060,7 @@
 				PRODUCT_NAME = Application;
 				SDKROOT = iphoneos;
 				TULSI_BUILD_PATH = tulsi_e2e_complex;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = Debug;
 		};
@@ -1093,6 +1094,7 @@
 				PYTHONIOENCODING = utf8;
 				SDKROOT = iphoneos;
 				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-workspace";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
 				TULSI_PROJECT = ComplexSingleProject;
 				TULSI_VERSION = 9.99.999.9999;
 				TULSI_WR = "${SRCROOT}/..";
@@ -1112,7 +1114,7 @@
 				PRODUCT_NAME = TodayExtension;
 				SDKROOT = iphoneos;
 				TULSI_BUILD_PATH = tulsi_e2e_complex;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = Debug;
 		};
@@ -1121,7 +1123,7 @@
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(TULSI_BWRS)/tulsi_e2e_complex/ObjCFramework";
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/Application/includes/second/include $(TULSI_WR)/tulsi_e2e_complex/Application/includes/second/include $(TULSI_WR)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/Application/includes/first/include $(TULSI_WR)/tulsi_e2e_complex/Application/includes/first/include $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/Application/includes/second/include $(TULSI_BWRS)/tulsi_e2e_complex/Application/includes/second/include $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/Application/includes/first/include $(TULSI_BWRS)/tulsi_e2e_complex/Application/includes/first/include $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/tulsi_e2e_complex/Application/includes/first/include $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/Application/includes/first/include $(TULSI_WR)/tulsi_e2e_complex/Application/includes/second/include $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/Application/includes/second/include $(TULSI_WR)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				OTHER_CFLAGS = "-DA=BINARY_DEFINE -D\"LIBRARY SECOND DEFINE=2\" -DLIBRARY_DEFINES_DEFINE=1 -D\"LIBRARY_VALUE_WITH_SPACES=Value with spaces\" -DSubLibraryWithDefines=1 -DSubLibraryWithDefines_DEFINE=SubLibraryWithDefines -DSubLibraryWithDifferentDefines=1";
 				PRODUCT_NAME = _idx_ApplicationLibrary_3EA018EE_ios_min10.0;
@@ -1146,7 +1148,7 @@
 			buildSettings = {
 				GCC_PREFIX_HEADER = "$(TULSI_WR)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/PCHGenerator/outs/PCHFile.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				OTHER_CFLAGS = "-D\"LIBRARY SECOND DEFINE=2\" -DLIBRARY_COPT_DEFINE -DLIBRARY_DEFINES_DEFINE=1 -D\"LIBRARY_VALUE_WITH_SPACES=Value with spaces\" -DSubLibraryWithDefines=1 -DSubLibraryWithDefines_DEFINE=SubLibraryWithDefines -DSubLibraryWithDifferentDefines=1";
 				PRODUCT_NAME = _idx_Library_FAFE9183_ios_min10.0;
@@ -1161,7 +1163,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				GCC_PREFIX_HEADER = "$(TULSI_BWRS)/tulsi_e2e_complex/SubLibrary/pch/AnotherPCHFile.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				PRODUCT_NAME = _idx_SubLibrary_241BBB47_ios_min10.0;
 				SDKROOT = iphoneos;
@@ -1173,7 +1175,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				OTHER_CFLAGS = "-D\"SubLibraryWithDifferentDefines_PREQUOTED=Prequoted with spaces\" -D'SubLibraryWithDifferentDefines_SINGLEQUOTED=Single quoted with spaces' -DSubLibraryWithDifferentDefines=1 -DSubLibraryWithDifferentDefines_INTEGER_DEFINE=1 -DSubLibraryWithDifferentDefines_LocalDefine -DSubLibraryWithDifferentDefines_STRING_DEFINE=Test -D\"SubLibraryWithDifferentDefines_STRING_WITH_SPACES=String with spaces\"";
 				PRODUCT_NAME = _idx_SubLibraryWithDifferentDefines_B982A5CC_ios_min10.0;
@@ -1186,7 +1188,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ /SubLibraryWithDefines/local/includes $(TULSI_BWRS)/relative/SubLibraryWithDefines/local/includes ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ /SubLibraryWithDefines/local/includes $(TULSI_BWRS)/relative/SubLibraryWithDefines/local/includes ";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				OTHER_CFLAGS = "-menable-no-nans -menable-no-infs -DSubLibraryWithDefines=1 -DSubLibraryWithDefines_DEFINE=SubLibraryWithDefines";
 				PRODUCT_NAME = _idx_SubLibraryWithIdenticalDefines_SubLibraryWithDefines_3CB291AA_ios_min10.0;
@@ -1199,7 +1201,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				PRODUCT_NAME = _idx_TodayExtensionLibrary_CoreDataResources_BA35CE93_ios_min10.0;
 				SDKROOT = iphoneos;
@@ -1215,7 +1217,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ $(TULSI_WR)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				PRODUCT_BUNDLE_IDENTIFIER = example.iosappTests;
@@ -1224,7 +1226,7 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Application.app/Application";
 				TULSI_BUILD_PATH = tulsi_e2e_complex;
 				TULSI_TEST_RUNNER_ONLY = YES;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = Release;
 		};
@@ -1241,7 +1243,7 @@
 				PRODUCT_NAME = Application;
 				SDKROOT = iphoneos;
 				TULSI_BUILD_PATH = tulsi_e2e_complex;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = Release;
 		};
@@ -1275,6 +1277,7 @@
 				PYTHONIOENCODING = utf8;
 				SDKROOT = iphoneos;
 				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-workspace";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
 				TULSI_PROJECT = ComplexSingleProject;
 				TULSI_VERSION = 9.99.999.9999;
 				TULSI_WR = "${SRCROOT}/..";
@@ -1294,7 +1297,7 @@
 				PRODUCT_NAME = TodayExtension;
 				SDKROOT = iphoneos;
 				TULSI_BUILD_PATH = tulsi_e2e_complex;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = Release;
 		};
@@ -1303,7 +1306,7 @@
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(TULSI_BWRS)/tulsi_e2e_complex/ObjCFramework";
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/Application/includes/second/include $(TULSI_WR)/tulsi_e2e_complex/Application/includes/second/include $(TULSI_WR)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/Application/includes/first/include $(TULSI_WR)/tulsi_e2e_complex/Application/includes/first/include $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/Application/includes/second/include $(TULSI_BWRS)/tulsi_e2e_complex/Application/includes/second/include $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/Application/includes/first/include $(TULSI_BWRS)/tulsi_e2e_complex/Application/includes/first/include $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/tulsi_e2e_complex/Application/includes/first/include $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/Application/includes/first/include $(TULSI_WR)/tulsi_e2e_complex/Application/includes/second/include $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/Application/includes/second/include $(TULSI_WR)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				OTHER_CFLAGS = "-DA=BINARY_DEFINE -D\"LIBRARY SECOND DEFINE=2\" -DLIBRARY_DEFINES_DEFINE=1 -D\"LIBRARY_VALUE_WITH_SPACES=Value with spaces\" -DSubLibraryWithDefines=1 -DSubLibraryWithDefines_DEFINE=SubLibraryWithDefines -DSubLibraryWithDifferentDefines=1";
 				PRODUCT_NAME = _idx_ApplicationLibrary_3EA018EE_ios_min10.0;
@@ -1328,7 +1331,7 @@
 			buildSettings = {
 				GCC_PREFIX_HEADER = "$(TULSI_WR)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/PCHGenerator/outs/PCHFile.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				OTHER_CFLAGS = "-D\"LIBRARY SECOND DEFINE=2\" -DLIBRARY_COPT_DEFINE -DLIBRARY_DEFINES_DEFINE=1 -D\"LIBRARY_VALUE_WITH_SPACES=Value with spaces\" -DSubLibraryWithDefines=1 -DSubLibraryWithDefines_DEFINE=SubLibraryWithDefines -DSubLibraryWithDifferentDefines=1";
 				PRODUCT_NAME = _idx_Library_FAFE9183_ios_min10.0;
@@ -1343,7 +1346,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				GCC_PREFIX_HEADER = "$(TULSI_BWRS)/tulsi_e2e_complex/SubLibrary/pch/AnotherPCHFile.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				PRODUCT_NAME = _idx_SubLibrary_241BBB47_ios_min10.0;
 				SDKROOT = iphoneos;
@@ -1355,7 +1358,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_complex/SubLibraryWithDifferentDefines/includes $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				OTHER_CFLAGS = "-D\"SubLibraryWithDifferentDefines_PREQUOTED=Prequoted with spaces\" -D'SubLibraryWithDifferentDefines_SINGLEQUOTED=Single quoted with spaces' -DSubLibraryWithDifferentDefines=1 -DSubLibraryWithDifferentDefines_INTEGER_DEFINE=1 -DSubLibraryWithDifferentDefines_LocalDefine -DSubLibraryWithDifferentDefines_STRING_DEFINE=Test -D\"SubLibraryWithDifferentDefines_STRING_WITH_SPACES=String with spaces\"";
 				PRODUCT_NAME = _idx_SubLibraryWithDifferentDefines_B982A5CC_ios_min10.0;
@@ -1368,7 +1371,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ /SubLibraryWithDefines/local/includes $(TULSI_BWRS)/relative/SubLibraryWithDefines/local/includes ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ /SubLibraryWithDefines/local/includes $(TULSI_BWRS)/relative/SubLibraryWithDefines/local/includes ";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				OTHER_CFLAGS = "-menable-no-nans -menable-no-infs -DSubLibraryWithDefines=1 -DSubLibraryWithDefines_DEFINE=SubLibraryWithDefines";
 				PRODUCT_NAME = _idx_SubLibraryWithIdenticalDefines_SubLibraryWithDefines_3CB291AA_ios_min10.0;
@@ -1381,7 +1384,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				PRODUCT_NAME = _idx_TodayExtensionLibrary_CoreDataResources_BA35CE93_ios_min10.0;
 				SDKROOT = iphoneos;
@@ -1413,7 +1416,7 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Application.app/Application";
 				TULSI_BUILD_PATH = tulsi_e2e_complex;
 				TULSI_TEST_RUNNER_ONLY = YES;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = __TulsiTestRunner_Debug;
 		};
@@ -1438,7 +1441,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BUILD_PATH = tulsi_e2e_complex;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = __TulsiTestRunner_Debug;
 		};
@@ -1477,6 +1480,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-workspace";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
 				TULSI_PROJECT = ComplexSingleProject;
 				TULSI_VERSION = 9.99.999.9999;
 				TULSI_WR = "${SRCROOT}/..";
@@ -1504,7 +1508,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BUILD_PATH = tulsi_e2e_complex;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = __TulsiTestRunner_Debug;
 		};

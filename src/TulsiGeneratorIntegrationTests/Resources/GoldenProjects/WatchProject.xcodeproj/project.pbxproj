@@ -44,7 +44,7 @@
 		25889F7CAC45F02F00000000 /* Info.plist */ = {isa = PBXFileReference; explicitFileType = text.plist; name = Info.plist; path = "tulsi-workspace/bazel-tulsi-includes/x/x/tulsi_e2e_watch/Application-intermediates/Info.plist"; sourceTree = "<group>"; };
 		25889F7CCCCE004E00000000 /* Application.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; name = Application.app; path = Application.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		25889F7CE643C43000000000 /* Interface.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Interface.storyboard; path = "tulsi-workspace/tulsi_e2e_watch/Watch2Extension/Interface.storyboard"; sourceTree = "<group>"; };
-		25889F7CEB058C2A00000000 /* BUILD */ = {isa = PBXFileReference; lastKnownFileType = text; name = BUILD; path = tulsi_e2e_watch/BUILD; sourceTree = "<group>"; };
+		25889F7CEB058C2A00000000 /* BUILD */ = {isa = PBXFileReference; lastKnownFileType = text; name = BUILD; path = tulsi_e2e_watch/BUILD; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.python; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -461,6 +461,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-workspace";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
 				TULSI_PROJECT = WatchProject;
 				TULSI_VERSION = 9.99.999.9999;
 				TULSI_WR = "${SRCROOT}/..";
@@ -488,7 +489,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BUILD_PATH = tulsi_e2e_watch;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = __TulsiTestRunner_Release;
 		};
@@ -512,7 +513,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BUILD_PATH = tulsi_e2e_watch;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 				WATCHOS_DEPLOYMENT_TARGET = 3.0;
 			};
 			name = __TulsiTestRunner_Release;
@@ -537,7 +538,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BUILD_PATH = tulsi_e2e_watch;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 				WATCHOS_DEPLOYMENT_TARGET = 3.0;
 			};
 			name = __TulsiTestRunner_Release;
@@ -572,6 +573,7 @@
 				PYTHONIOENCODING = utf8;
 				SDKROOT = iphoneos;
 				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-workspace";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
 				TULSI_PROJECT = WatchProject;
 				TULSI_VERSION = 9.99.999.9999;
 				TULSI_WR = "${SRCROOT}/..";
@@ -591,7 +593,7 @@
 				PRODUCT_NAME = Application;
 				SDKROOT = iphoneos;
 				TULSI_BUILD_PATH = tulsi_e2e_watch;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = Debug;
 		};
@@ -607,7 +609,7 @@
 				PRODUCT_NAME = WatchApplication;
 				SDKROOT = watchos;
 				TULSI_BUILD_PATH = tulsi_e2e_watch;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 				WATCHOS_DEPLOYMENT_TARGET = 3.0;
 			};
 			name = Debug;
@@ -624,7 +626,7 @@
 				PRODUCT_NAME = WatchExtension;
 				SDKROOT = watchos;
 				TULSI_BUILD_PATH = tulsi_e2e_watch;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 				WATCHOS_DEPLOYMENT_TARGET = 3.0;
 			};
 			name = Debug;
@@ -633,7 +635,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/tulsi_e2e_watch/Library/includes/one/include $(TULSI_WR)/tulsi_e2e_watch/Library/includes/one/include $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_watch/Library/includes/one/include $(TULSI_BWRS)/tulsi_e2e_watch/Library/includes/one/include $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/tulsi_e2e_watch/Library/includes/one/include $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_watch/Library/includes/one/include $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				PRODUCT_NAME = _idx_ApplicationLibrary_B45268BB_ios_min10.0;
 				SDKROOT = iphoneos;
@@ -645,7 +647,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
 				PRODUCT_NAME = _idx_WatchExtensionLibrary_2A5269B8_watchos_min3.0;
 				SDKROOT = watchos;
 				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
@@ -683,6 +685,7 @@
 				PYTHONIOENCODING = utf8;
 				SDKROOT = iphoneos;
 				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-workspace";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
 				TULSI_PROJECT = WatchProject;
 				TULSI_VERSION = 9.99.999.9999;
 				TULSI_WR = "${SRCROOT}/..";
@@ -702,7 +705,7 @@
 				PRODUCT_NAME = Application;
 				SDKROOT = iphoneos;
 				TULSI_BUILD_PATH = tulsi_e2e_watch;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = Release;
 		};
@@ -718,7 +721,7 @@
 				PRODUCT_NAME = WatchApplication;
 				SDKROOT = watchos;
 				TULSI_BUILD_PATH = tulsi_e2e_watch;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 				WATCHOS_DEPLOYMENT_TARGET = 3.0;
 			};
 			name = Release;
@@ -735,7 +738,7 @@
 				PRODUCT_NAME = WatchExtension;
 				SDKROOT = watchos;
 				TULSI_BUILD_PATH = tulsi_e2e_watch;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 				WATCHOS_DEPLOYMENT_TARGET = 3.0;
 			};
 			name = Release;
@@ -744,7 +747,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/tulsi_e2e_watch/Library/includes/one/include $(TULSI_WR)/tulsi_e2e_watch/Library/includes/one/include $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_watch/Library/includes/one/include $(TULSI_BWRS)/tulsi_e2e_watch/Library/includes/one/include $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/tulsi_e2e_watch/Library/includes/one/include $(TULSI_BWRS)/bazel-tulsi-includes/x/x/tulsi_e2e_watch/Library/includes/one/include $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				PRODUCT_NAME = _idx_ApplicationLibrary_B45268BB_ios_min10.0;
 				SDKROOT = iphoneos;
@@ -756,7 +759,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
 				PRODUCT_NAME = _idx_WatchExtensionLibrary_2A5269B8_watchos_min3.0;
 				SDKROOT = watchos;
 				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
@@ -799,6 +802,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-workspace";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
 				TULSI_PROJECT = WatchProject;
 				TULSI_VERSION = 9.99.999.9999;
 				TULSI_WR = "${SRCROOT}/..";
@@ -826,7 +830,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BUILD_PATH = tulsi_e2e_watch;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = __TulsiTestRunner_Debug;
 		};
@@ -850,7 +854,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BUILD_PATH = tulsi_e2e_watch;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 				WATCHOS_DEPLOYMENT_TARGET = 3.0;
 			};
 			name = __TulsiTestRunner_Debug;
@@ -875,7 +879,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BUILD_PATH = tulsi_e2e_watch;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 				WATCHOS_DEPLOYMENT_TARGET = 3.0;
 			};
 			name = __TulsiTestRunner_Debug;

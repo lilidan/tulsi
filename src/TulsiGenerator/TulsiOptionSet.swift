@@ -68,8 +68,20 @@ public enum TulsiOptionKey: String {
       // Generate .runfiles directory, as referenced by TEST_SRCDIR in bazel tests.
       GenerateRunfiles,
 
+      // Whether test sources are filtered by the project's path filters.
+      PathFiltersApplyToTestSources,
+
       // Used by Tulsi to improve Bazel-caching of build flags.
       ProjectPrioritizesSwift,
+
+      // When building an iOS app with a companion watchOS app, the default architecture for the
+      // watchOS app will be i386. This option overrides the default and uses x86_64 instead. This
+      // is needed for Xcode where watch simulators are x86_64 but older versions will still need
+      // i386.
+      Use64BitWatchSimulator,
+
+      // Option to fallback to using a global lldbinit.
+      DisableCustomLLDBInit,
 
       // Custom build phase run script that runs before bazel build.
       PreBuildPhaseRunScript,
@@ -319,9 +331,12 @@ public class TulsiOptionSet: Equatable {
     addBoolOption(.IncludeBuildSources, .Generic, false)
     addBoolOption(.ImprovedImportAutocompletionFix, .Generic, true)
     addBoolOption(.GenerateRunfiles, .Generic, false)
+    addBoolOption(.PathFiltersApplyToTestSources, .Generic, true)
     addBoolOption(.ProjectPrioritizesSwift, .Generic, false)
     addBoolOption(.SwiftForcesdSYMs, .Generic, false)
     addBoolOption(.TreeArtifactOutputs, .Generic, true)
+    addBoolOption(.Use64BitWatchSimulator, .Generic, false)
+    addBoolOption(.DisableCustomLLDBInit, .Generic, false)
 
     let defaultIdentifier = PlatformConfiguration.defaultConfiguration.identifier
     let platformCPUIdentifiers = PlatformConfiguration.allValidConfigurations.map { $0.identifier }

@@ -55,7 +55,7 @@
 		25889F7CBE1ACDB100000000 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = main.m; path = "tulsi-workspace/tulsi_e2e_mac/src/main.m"; sourceTree = "<group>"; };
 		25889F7CC867E1F300000000 /* TodayViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TodayViewController.h; path = "tulsi-workspace/tulsi_e2e_mac/src/extensions/today/TodayViewController.h"; sourceTree = "<group>"; };
 		25889F7CCDA86EAB00000000 /* UnitTestsNoHost.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = UnitTestsNoHost.m; path = "tulsi-workspace/tulsi_e2e_mac/test/UnitTestsNoHost.m"; sourceTree = "<group>"; };
-		25889F7CEAD580F400000000 /* BUILD */ = {isa = PBXFileReference; lastKnownFileType = text; name = BUILD; path = tulsi_e2e_mac/BUILD; sourceTree = "<group>"; };
+		25889F7CEAD580F400000000 /* BUILD */ = {isa = PBXFileReference; lastKnownFileType = text; name = BUILD; path = tulsi_e2e_mac/BUILD; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.python; };
 		25889F7CEF58351100000000 /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Main.storyboard; path = "tulsi-workspace/tulsi_e2e_mac/Resources/Main.storyboard"; sourceTree = "<group>"; };
 		25889F7CEF97F98300000000 /* Info.plist */ = {isa = PBXFileReference; explicitFileType = text.plist; name = Info.plist; path = "tulsi-workspace/bazel-tulsi-includes/x/x/tulsi_e2e_mac/UnitTestsNoHost.__internal__.__test_bundle-intermediates/Info.plist"; sourceTree = "<group>"; };
 		25889F7CF8E2406C00000000 /* UnitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; name = UnitTests.xctest; path = UnitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -587,7 +587,7 @@
 				TEST_TARGET_NAME = MyMacOSApp;
 				TULSI_BUILD_PATH = tulsi_e2e_mac;
 				TULSI_TEST_RUNNER_ONLY = YES;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = __TulsiTestRunner_Release;
 		};
@@ -612,7 +612,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BUILD_PATH = tulsi_e2e_mac;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = __TulsiTestRunner_Release;
 		};
@@ -640,7 +640,7 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MyMacOSApp.app/Contents/MacOS/MyMacOSApp";
 				TULSI_BUILD_PATH = tulsi_e2e_mac;
 				TULSI_TEST_RUNNER_ONLY = YES;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = __TulsiTestRunner_Release;
 		};
@@ -679,6 +679,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-workspace";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
 				TULSI_PROJECT = MacOSTestsProject;
 				TULSI_VERSION = 9.99.999.9999;
 				TULSI_WR = "${SRCROOT}/..";
@@ -707,7 +708,7 @@
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BUILD_PATH = tulsi_e2e_mac;
 				TULSI_TEST_RUNNER_ONLY = YES;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = __TulsiTestRunner_Release;
 		};
@@ -718,6 +719,7 @@
 				BAZEL_TARGET = "//tulsi_e2e_mac:UITests";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.example.mac-appTests";
@@ -726,7 +728,7 @@
 				TEST_TARGET_NAME = MyMacOSApp;
 				TULSI_BUILD_PATH = tulsi_e2e_mac;
 				TULSI_TEST_RUNNER_ONLY = YES;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = Debug;
 		};
@@ -743,7 +745,7 @@
 				PRODUCT_NAME = MyMacOSApp;
 				SDKROOT = macosx;
 				TULSI_BUILD_PATH = tulsi_e2e_mac;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = Debug;
 		};
@@ -755,6 +757,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.example.mac-appTests";
@@ -763,7 +766,7 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MyMacOSApp.app/Contents/MacOS/MyMacOSApp";
 				TULSI_BUILD_PATH = tulsi_e2e_mac;
 				TULSI_TEST_RUNNER_ONLY = YES;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = Debug;
 		};
@@ -797,6 +800,7 @@
 				PYTHONIOENCODING = utf8;
 				SDKROOT = macosx;
 				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-workspace";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
 				TULSI_PROJECT = MacOSTestsProject;
 				TULSI_VERSION = 9.99.999.9999;
 				TULSI_WR = "${SRCROOT}/..";
@@ -810,6 +814,7 @@
 				BAZEL_TARGET = "//tulsi_e2e_mac:UnitTestsNoHost";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tulsi.tests;
@@ -817,7 +822,7 @@
 				SDKROOT = macosx;
 				TULSI_BUILD_PATH = tulsi_e2e_mac;
 				TULSI_TEST_RUNNER_ONLY = YES;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = Debug;
 		};
@@ -825,7 +830,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				PRODUCT_NAME = _idx_MyTodayExtensionSources_MyMacAppSources_MyPluginSources_FEE655FD_macos_min10.13;
 				SDKROOT = macosx;
@@ -840,6 +845,7 @@
 				BAZEL_TARGET = "//tulsi_e2e_mac:UITests";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.example.mac-appTests";
@@ -848,7 +854,7 @@
 				TEST_TARGET_NAME = MyMacOSApp;
 				TULSI_BUILD_PATH = tulsi_e2e_mac;
 				TULSI_TEST_RUNNER_ONLY = YES;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = Release;
 		};
@@ -865,7 +871,7 @@
 				PRODUCT_NAME = MyMacOSApp;
 				SDKROOT = macosx;
 				TULSI_BUILD_PATH = tulsi_e2e_mac;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = Release;
 		};
@@ -877,6 +883,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.example.mac-appTests";
@@ -885,7 +892,7 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MyMacOSApp.app/Contents/MacOS/MyMacOSApp";
 				TULSI_BUILD_PATH = tulsi_e2e_mac;
 				TULSI_TEST_RUNNER_ONLY = YES;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = Release;
 		};
@@ -919,6 +926,7 @@
 				PYTHONIOENCODING = utf8;
 				SDKROOT = macosx;
 				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-workspace";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
 				TULSI_PROJECT = MacOSTestsProject;
 				TULSI_VERSION = 9.99.999.9999;
 				TULSI_WR = "${SRCROOT}/..";
@@ -932,6 +940,7 @@
 				BAZEL_TARGET = "//tulsi_e2e_mac:UnitTestsNoHost";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tulsi.tests;
@@ -939,7 +948,7 @@
 				SDKROOT = macosx;
 				TULSI_BUILD_PATH = tulsi_e2e_mac;
 				TULSI_TEST_RUNNER_ONLY = YES;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = Release;
 		};
@@ -947,7 +956,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/bazel-tulsi-includes/x/x/ $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_WR)/. $(TULSI_BWRS)/bazel-tulsi-includes/x/x/ ";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				PRODUCT_NAME = _idx_MyTodayExtensionSources_MyMacAppSources_MyPluginSources_FEE655FD_macos_min10.13;
 				SDKROOT = macosx;
@@ -978,7 +987,7 @@
 				TEST_TARGET_NAME = MyMacOSApp;
 				TULSI_BUILD_PATH = tulsi_e2e_mac;
 				TULSI_TEST_RUNNER_ONLY = YES;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = __TulsiTestRunner_Debug;
 		};
@@ -1003,7 +1012,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BUILD_PATH = tulsi_e2e_mac;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = __TulsiTestRunner_Debug;
 		};
@@ -1031,7 +1040,7 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MyMacOSApp.app/Contents/MacOS/MyMacOSApp";
 				TULSI_BUILD_PATH = tulsi_e2e_mac;
 				TULSI_TEST_RUNNER_ONLY = YES;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = __TulsiTestRunner_Debug;
 		};
@@ -1070,6 +1079,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BWRS = "$(PROJECT_FILE_PATH)/.tulsi/tulsi-workspace";
+				TULSI_LLDBINIT_FILE = "$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit";
 				TULSI_PROJECT = MacOSTestsProject;
 				TULSI_VERSION = 9.99.999.9999;
 				TULSI_WR = "${SRCROOT}/..";
@@ -1098,7 +1108,7 @@
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "$(PRODUCT_NAME).h";
 				TULSI_BUILD_PATH = tulsi_e2e_mac;
 				TULSI_TEST_RUNNER_ONLY = YES;
-				TULSI_XCODE_VERSION = 11.2.1.11B500;
+				TULSI_XCODE_VERSION = 12.4.0.12D4e;
 			};
 			name = __TulsiTestRunner_Debug;
 		};

@@ -63,9 +63,8 @@ class TulsiSourcesAspectTests: BazelIntegrationTestCase {
                                                   "path": "tulsi_test/Application/Launch.storyboard",
                                                   "src": true] as NSDictionary)
 
-    // TODO(kaipi): Reenable once the application rules use the Starlark Linking API.
-    // checker.assertThat("//tulsi_test:Application")
-    //     .dependsOn("//tulsi_test:ApplicationLibrary")
+    checker.assertThat("//tulsi_test:Application")
+        .dependsTransitivelyOn("//tulsi_test:ApplicationLibrary")
 
     checker.assertThat("//tulsi_test:ApplicationLibrary")
         .dependsOn("//tulsi_test:Library")
@@ -361,10 +360,9 @@ class TulsiSourcesAspectTests: BazelIntegrationTestCase {
 
     let checker = InfoChecker(ruleEntryMap: ruleEntryMap)
 
-    // TODO(kaipi): Reenable once the application rules use the Starlark Linking API.
-    // checker.assertThat("//tulsi_test:Application")
-    //   .dependsOn("//tulsi_test:ApplicationLibrary")
-    //   .dependsOn("//tulsi_test:ApplicationResources")
+    checker.assertThat("//tulsi_test:Application")
+      .dependsTransitivelyOn("//tulsi_test:ApplicationLibrary")
+      .dependsTransitivelyOn("//tulsi_test:ApplicationResources")
 
     checker.assertThat("//tulsi_test:ApplicationLibrary")
       .hasSources(["tulsi_test/Library/srcs/main.m"])
@@ -377,11 +375,31 @@ class TulsiSourcesAspectTests: BazelIntegrationTestCase {
       .dependsOn("//tulsi_test:WatchApplicationResources")
 
     checker.assertThat("//tulsi_test:WatchExtension")
-      .dependsOn("//tulsi_test:WatchExtensionLibrary")
-      .dependsOn("//tulsi_test:WatchExtensionResources")
+      .dependsTransitivelyOn("//tulsi_test:WatchExtensionLibrary")
+      .dependsTransitivelyOn("//tulsi_test:WatchExtensionResources")
 
     checker.assertThat("//tulsi_test:WatchExtensionLibrary")
       .hasSources(["tulsi_test/Watch2ExtensionBinary/srcs/watch2_extension_binary.m"])
+  }
+
+  func testAppClip() throws {
+    installBUILDFile("AppClip", intoSubdirectory: "tulsi_test")
+    let ruleEntryMap = try extractRuleEntriesForLabels([BuildLabel("//tulsi_test:Application")])
+
+    let checker = InfoChecker(ruleEntryMap: ruleEntryMap)
+
+    checker.assertThat("//tulsi_test:Application")
+      .dependsOn("//tulsi_test:AppClip")
+
+    checker.assertThat("//tulsi_test:ApplicationLibrary")
+      .hasSources(["tulsi_test/Library/srcs/main.m"])
+
+    checker.assertThat("//tulsi_test:AppClip")
+      .dependsTransitivelyOn("//tulsi_test:AppClipLibrary")
+      .hasAttribute(.supporting_files,
+                            value: [["is_dir": false,
+                                     "path": "tulsi_test/AppClip/app_infoplists/Info.plist",
+                                     "src": true]] as NSArray)
   }
 
   func testSwift() throws {
@@ -390,9 +408,8 @@ class TulsiSourcesAspectTests: BazelIntegrationTestCase {
 
     let checker = InfoChecker(ruleEntryMap: ruleEntryMap)
 
-    // TODO(kaipi): Reenable once the application rules use the Starlark Linking API.
-    // checker.assertThat("//tulsi_test:Application")
-    //     .dependsOn("//tulsi_test:ApplicationLibrary")
+    checker.assertThat("//tulsi_test:Application")
+        .dependsTransitivelyOn("//tulsi_test:ApplicationLibrary")
 
     checker.assertThat("//tulsi_test:ApplicationLibrary")
         .dependsOn("//tulsi_test:SwiftLibrary")
@@ -703,19 +720,22 @@ class InfoChecker {
       let paths = Set(includes.map { (path, recursive) -> String in
         return path
       })
-      XCTAssertEqual(paths, value, line: line)
+      // The CcCompilationContext migration adds "." to the include paths. We filter that out
+      // to make the test robust against the change.  See
+      // https://github.com/bazelbuild/bazel/issues/10674 for more details.
+      XCTAssertEqual(paths.filter({ $0 != "."}), value, line: line)
       return self
     }
 
     /// Asserts that the contextual RuleEntry has an attribute with the given name and value.
     @discardableResult
-    func hasObjcDefines(_ value: [String], line: UInt = #line) -> Context {
+    func hasObjcDefines(_ value: Set<String>, line: UInt = #line) -> Context {
       guard let ruleEntry = ruleEntry else { return self }
       guard let defines = ruleEntry.objcDefines else {
         XCTFail("\(ruleEntry) expected to have defines", line: line)
         return self
       }
-      XCTAssertEqual(defines, value, line: line)
+      XCTAssertEqual(Set(defines), value, line: line)
       return self
     }
 

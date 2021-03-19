@@ -236,6 +236,19 @@ final class PBXFileReference: PBXReference, Hashable {
     } else if let uti = explicitFileType {
       try serializer.addField("explicitFileType", uti)
     }
+
+    // Give Starlark files Python syntax highlighting by default.
+    // It's quite a good match--and certainly a better default than no highlighting.
+    // Xcode's plugin functionality is currently so limited that we can't do better.
+    if name == "BUILD" || name == "WORKSPACE" || name.hasSuffix(".bzl") || name.hasSuffix(".sky") || name.hasSuffix(".star") || name.hasSuffix(".bazel") || name.hasSuffix(".BUILD") || name.hasSuffix(".WORKSPACE") {
+      try serializer.addField("xcLanguageSpecificationIdentifier", "xcode.lang.python")
+    } else if name.hasSuffix(".bazelrc") {
+      // Similarly, but shell for .bazelrc 
+      try serializer.addField("xcLanguageSpecificationIdentifier", "xcode.lang.sh")
+    } else if name.hasSuffix(".tulsigen") || name.hasSuffix(".tulsiconf") || name.hasSuffix(".tulsiconf-user") {
+      // Similarly, but JSON for Tulsi configuation files.
+      try serializer.addField("xcLanguageSpecificationIdentifier", "xcode.lang.json")
+    }
   }
 }
 
@@ -699,6 +712,7 @@ class PBXTarget: PBXObjectProtocol, Hashable {
     case Framework = "com.apple.product-type.framework"
     case StaticFramework = "com.apple.product-type.framework.static"
     case Application = "com.apple.product-type.application"
+    case AppClip = "com.apple.product-type.application.on-demand-install-capable"
     case MessagesApplication = "com.apple.product-type.application.messages"
     case MessagesExtension = "com.apple.product-type.app-extension.messages"
     case MessagesStickerPackExtension = "com.apple.product-type.app-extension.messages-sticker-pack"
@@ -773,6 +787,8 @@ class PBXTarget: PBXObjectProtocol, Hashable {
           fallthrough
         case .MessagesApplication:
           fallthrough
+        case .AppClip:
+          fallthrough
         case .Application:
           return "wrapper.application"
 
@@ -825,6 +841,8 @@ class PBXTarget: PBXObjectProtocol, Hashable {
         case .Watch2App:
           fallthrough
         case .MessagesApplication:
+          fallthrough
+        case .AppClip:
           fallthrough
         case .Application:
           return "\(name).app"

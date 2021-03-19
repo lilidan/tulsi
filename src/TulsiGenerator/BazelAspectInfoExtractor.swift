@@ -225,6 +225,11 @@ final public class BazelAspectInfoExtractor: QueuedLogging {
         // Don't replace test_suites with their tests. This allows the Aspect to discover the
         // structure of test_suites instead of just the tests they resolve to.
         "--noexpand_test_suites",
+        // Don't generate parse headers actions.  They are not needed and would consume memory.
+        "--features=-parse_headers",
+        // Don't run validation actions during project generation; validation actions could
+        // slow down the project generation or fail it.
+        "--experimental_run_validations=0",
         // The following flags WILL affect Bazel analysis caching.
         // Keep this consistent with bazel_build.py.
         "--aspects",
@@ -356,6 +361,12 @@ final public class BazelAspectInfoExtractor: QueuedLogging {
       } else {
         extensions = nil
       }
+      let appClips: Set<BuildLabel>?
+      if let appClipsList = dict["app_clips"] as? [String] {
+        appClips = Set(appClipsList.map({ BuildLabel($0) }))
+      } else {
+        appClips = nil
+      }
       let bundleID = dict["bundle_id"] as? String
       let bundleName = dict["bundle_name"] as? String
       let productType = dict["product_type"] as? String
@@ -401,6 +412,7 @@ final public class BazelAspectInfoExtractor: QueuedLogging {
                                 frameworkImports: frameworkImports,
                                 secondaryArtifacts: secondaryArtifacts,
                                 extensions: extensions,
+                                appClips: appClips,
                                 bundleID: bundleID,
                                 bundleName: bundleName,
                                 productType: targetProductType,

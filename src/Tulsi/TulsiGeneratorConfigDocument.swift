@@ -88,16 +88,24 @@ final class TulsiGeneratorConfigDocument: NSDocument,
     }
   }
 
+  private var uiRuleInfoObservers: [NSKeyValueObservation] = []
+
   /// The UIRuleEntry instances that are acted on by the associated UI.
   @objc dynamic var uiRuleInfos = [UIRuleInfo]() {
     willSet {
       stopObservingRuleEntries()
 
-      for entry in newValue {
-        entry.addObserver(self,
-                          forKeyPath: "selected",
-                          options: .new,
-                          context: &TulsiGeneratorConfigDocument.KVOContext)
+      uiRuleInfoObservers = newValue.map { entry in
+        entry.observe(
+          \.selected, options: .new
+        ) { [unowned self] _, change in
+          guard let value = change.newValue else { return }
+          if value {
+            self.selectedRuleInfoCount += 1
+          } else {
+            self.selectedRuleInfoCount -= 1
+          }
+        }
       }
     }
   }
@@ -158,8 +166,6 @@ final class TulsiGeneratorConfigDocument: NSDocument,
 
   // Closure to be invoked when a save operation completes.
   private var saveCompletionHandler: ((_ canceled: Bool, _ error: Error?) -> Void)? = nil
-
-  private static var KVOContext: Int = 0
 
   static func isGeneratorConfigFilename(_ filename: String) -> Bool {
     return (filename as NSString).pathExtension == TulsiGeneratorConfig.FileExtension
@@ -424,23 +430,6 @@ final class TulsiGeneratorConfigDocument: NSDocument,
     return false
   }
 
-  override func observeValue(forKeyPath keyPath: String?,
-                              of object: Any?,
-                              change: [NSKeyValueChangeKey : Any]?,
-                              context: UnsafeMutableRawPointer?) {
-    if context != &TulsiGeneratorConfigDocument.KVOContext {
-      super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
-      return
-    }
-    if keyPath == "selected", let newValue = change?[NSKeyValueChangeKey.newKey] as? Bool {
-      if (newValue) {
-        selectedRuleInfoCount += 1
-      } else {
-        selectedRuleInfoCount -= 1
-      }
-    }
-  }
-
   private func enabledFeatures(options: TulsiOptionSet) -> Set<BazelSettingFeature> {
     return BazelBuildSettingsFeatures.enabledFeatures(options: options)
   }
@@ -469,6 +458,7 @@ final class TulsiGeneratorConfigDocument: NSDocument,
         let compilationModeOption = optionSet[.ProjectGenerationCompilationMode]
         let platformConfigOption = optionSet[.ProjectGenerationPlatformConfiguration]
         let prioritizeSwiftOption = optionSet[.ProjectPrioritizesSwift]
+        let use64BitWatchSimulatorOption = optionSet[.Use64BitWatchSimulator]
         ruleEntryMap = try self.infoExtractor.ruleEntriesForLabels(selectedLabels,
                                                                    startupOptions: startupOptions,
                                                                    extraStartupOptions: extraStartupOptions,
@@ -476,6 +466,7 @@ final class TulsiGeneratorConfigDocument: NSDocument,
                                                                    compilationModeOption: compilationModeOption,
                                                                    platformConfigOption: platformConfigOption,
                                                                    prioritizeSwiftOption: prioritizeSwiftOption,
+                                                                   use64BitWatchSimulatorOption: use64BitWatchSimulatorOption,
                                                                    features: self.enabledFeatures(options: optionSet))
       } catch TulsiProjectInfoExtractor.ExtractorError.ruleEntriesFailed(let info) {
         LogMessage.postError("Label resolution failed: \(info)")
@@ -724,9 +715,8 @@ final class TulsiGeneratorConfigDocument: NSDocument,
   // MARK: - Private methods
 
   private func stopObservingRuleEntries() {
-    for entry in uiRuleInfos {
-      entry.removeObserver(self, forKeyPath: "selected", context: &TulsiGeneratorConfigDocument.KVOContext)
-    }
+    uiRuleInfoObservers.forEach { $0.invalidate() }
+    uiRuleInfoObservers = []
   }
 
   private func makeConfig(withFullyResolvedOptions resolve: Bool = false) -> TulsiGeneratorConfig? {
@@ -806,6 +796,7 @@ final class TulsiGeneratorConfigDocument: NSDocument,
                                                               compilationModeOption: options[.ProjectGenerationCompilationMode],
                                                               platformConfigOption: options[.ProjectGenerationPlatformConfiguration],
                                                               prioritizeSwiftOption: options[.ProjectPrioritizesSwift],
+                                                              use64BitWatchSimulatorOption: options[.Use64BitWatchSimulator],
                                                               features: enabledFeatures(options: options))
     var unresolvedLabels = Set<BuildLabel>()
     var ruleInfos = [UIRuleInfo]()

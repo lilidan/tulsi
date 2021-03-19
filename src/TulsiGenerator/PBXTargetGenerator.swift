@@ -104,9 +104,17 @@ protocol PBXTargetGeneratorProtocol: class {
 
   /// Generates Xcode build targets that invoke Bazel for the given targets. For test-type rules,
   /// non-compiling source file linkages are created to facilitate indexing of XCTests.
+  ///
+  /// If `pathFilters` is nil, no path filtering is done for test sources (to keep legacy behavior
+  /// for users who were depending upon it).
+  ///
+  /// Returns a mapping from build label to generated PBXNativeTarget.
   /// Throws if one of the RuleEntry instances is for an unsupported Bazel target type.
-  func generateBuildTargetsForRuleEntries(_ entries: Set<RuleEntry>,
-                                          ruleEntryMap: RuleEntryMap) throws
+  func generateBuildTargetsForRuleEntries(
+    _ entries: Set<RuleEntry>,
+    ruleEntryMap: RuleEntryMap,
+    pathFilters: Set<String>?
+  ) throws -> [BuildLabel: PBXNativeTarget]
 }
 
 extension PBXTargetGeneratorProtocol {
@@ -187,6 +195,9 @@ final class PBXTargetGenerator: PBXTargetGeneratorProtocol {
 
   /// The path to the Tulsi generated outputs root. For more information see tulsi_aspects.bzl
   static let tulsiIncludesPath = "bazel-tulsi-includes/x/x"
+
+  /// Path prefix for files from external repositories.
+  static let externalPrefix = "external/"
 
   let project: PBXProject
   let buildScriptPath: String
@@ -810,8 +821,11 @@ final class PBXTargetGenerator: PBXTargetGeneratorProtocol {
   }
 
   /// Generates build targets for the given rule entries.
-  func generateBuildTargetsForRuleEntries(_ ruleEntries: Set<RuleEntry>,
-                                          ruleEntryMap: RuleEntryMap) throws {
+  func generateBuildTargetsForRuleEntries(
+    _ ruleEntries: Set<RuleEntry>,
+    ruleEntryMap: RuleEntryMap,
+    pathFilters: Set<String>?
+  ) throws -> [BuildLabel: PBXNativeTarget] {
     let namedRuleEntries = generateUniqueNamesForRuleEntries(ruleEntries)
 
     let progressNotifier = ProgressNotifier(name: GeneratingBuildTargets,
@@ -820,12 +834,14 @@ final class PBXTargetGenerator: PBXTargetGeneratorProtocol {
     var testTargetLinkages = [(PBXNativeTarget, BuildLabel?, RuleEntry)]()
     var watchAppTargets = [String: (PBXNativeTarget, RuleEntry)]()
     var watchExtensionsByEntry = [RuleEntry: PBXNativeTarget]()
+    var targetsByLabel = [BuildLabel: PBXNativeTarget]()
 
     for (name, entry) in namedRuleEntries {
       progressNotifier.incrementValue()
       let target = try createBuildTargetForRuleEntry(entry,
                                                      named: name,
                                                      ruleEntryMap: ruleEntryMap)
+      targetsByLabel[entry.label] = target
 
       if let script = options[.PreBuildPhaseRunScript, entry.label.value] {
         let runScript = PBXShellScriptBuildPhase(shellScript: script, shellPath: "/bin/bash")
@@ -877,7 +893,7 @@ final class PBXTargetGenerator: PBXTargetGeneratorProtocol {
     for (testTarget, testHostLabel, entry) in testTargetLinkages {
       let testHostTarget: PBXNativeTarget?
       if let hostTargetLabel = testHostLabel {
-        testHostTarget = projectTargetForLabel(hostTargetLabel) as? PBXNativeTarget
+        testHostTarget = targetsByLabel[hostTargetLabel]
         if testHostTarget == nil {
           // If the user did not choose to include the host target it won't be available so the
           // linkage can be skipped. We will still force the generation of this test host target to
@@ -893,15 +909,22 @@ final class PBXTargetGenerator: PBXTargetGeneratorProtocol {
       updateTestTarget(testTarget,
                        withLinkageToHostTarget: testHostTarget,
                        ruleEntry: entry,
-                       ruleEntryMap: ruleEntryMap)
+                       ruleEntryMap: ruleEntryMap,
+                       pathFilters: pathFilters)
     }
+    return targetsByLabel
   }
 
   // MARK: - Private methods
 
   /// Generates a filter function that may be used to verify that a path string is allowed by the
   /// given set of pathFilters.
-  private func pathFilterFunc(_ pathFilters: Set<String>) -> (String) -> Bool {
+  private func pathFilterFunc(_ pathFilters: Set<String>?) -> (String) -> Bool {
+    guard let pathFilters = pathFilters else {
+      return { (path: String) -> Bool in
+        return true
+      }
+    }
     let recursiveFilters = Set<String>(pathFilters.filter({ $0.hasSuffix("/...") }).map() {
       let index = $0.index($0.endIndex, offsetBy: -3)
       return String($0[..<index])
@@ -983,33 +1006,112 @@ final class PBXTargetGenerator: PBXTargetGeneratorProtocol {
     return (nonARCFileReferences, settings)
   }
 
-  private func generateUniqueNamesForRuleEntries(_ ruleEntries: Set<RuleEntry>) -> [String: RuleEntry] {
-    // Build unique names for the target rules.
-    var collidingRuleEntries = [String: [RuleEntry]]()
-    for entry: RuleEntry in ruleEntries {
-      let shortName = entry.label.targetName!
-      if var existingRules = collidingRuleEntries[shortName] {
-        existingRules.append(entry)
-        collidingRuleEntries[shortName] = existingRules
-      } else {
-        collidingRuleEntries[shortName] = [entry]
-      }
+  /// Find the longest common non-empty strict prefix for the given strings if there is one.
+  private func longestCommonPrefix(_ strings: Set<String>, separator: Character) -> String {
+    // Longest common prefix for 0 or 1 string(s) doesn't make sense.
+    guard strings.count >= 2, var shortestString = strings.first else { return "" }
+    for str in strings {
+      guard str.count < shortestString.count else { continue }
+      shortestString = str
     }
 
-    var namedRuleEntries = [String: RuleEntry]()
-    for (name, entries) in collidingRuleEntries {
-      guard entries.count > 1 else {
-        namedRuleEntries[name] = entries.first!
+    guard !shortestString.isEmpty else { return "" }
+
+    // Drop the last so we can only get a strict prefix.
+    var components = shortestString.split(separator: separator).dropLast()
+    var potentialPrefix = "\(components.joined(separator: "\(separator)"))\(separator)"
+
+    for str in strings {
+      while !components.isEmpty && !str.hasPrefix(potentialPrefix) {
+        components = components.dropLast()
+        potentialPrefix = "\(components.joined(separator: "\(separator)"))\(separator)"
+      }
+    }
+    return potentialPrefix
+  }
+
+  /// Name the given `ruleEntries` using the `namer` function.
+  ///
+  /// `ruleEntries` must be mutually exclusive with the values in `named`. Intended use case:
+  /// call this first with an initial set and `namer`, and then subsequent calls should use the
+  /// results of the previous call (unnamed entries) with a different `namer`.
+  ///
+  /// Only unique names will be inserted into the `named` dictionary. If when naming a
+  /// `RuleEntry`, the name is already in the `named` dictionary, the previously named
+  /// `RuleEntry` will still be valid.
+  ///
+  /// Returns a `Set<RuleEntry>` representing the entries which still need to be named.
+  private func uniqueNames(for ruleEntries: Set<RuleEntry>,
+                           named: inout [String: RuleEntry],
+                           namer: (_ ruleEntry: RuleEntry) -> String?
+  ) -> Set<RuleEntry> {
+    var unnamed = Set<RuleEntry>()
+
+    // Group the entries by name.
+    var ruleEntriesByName = [String: [RuleEntry]]()
+    for entry in ruleEntries {
+      guard let name = namer(entry) else {
+        unnamed.insert(entry)
         continue
       }
-
-      for entry in entries {
-        let fullName = entry.label.asFullPBXTargetName!
-        namedRuleEntries[fullName] = entry
-      }
+      ruleEntriesByName[name, default: []].append(entry)
     }
 
-    return namedRuleEntries
+    for (name, entries) in ruleEntriesByName {
+      // Name already used or not unique.
+      guard entries.count == 1 && named.index(forKey: name) == nil else {
+        unnamed.formUnion(entries)
+        continue
+      }
+      named[name] = entries.first!
+    }
+    return unnamed
+  }
+
+  /// Generate unique names for the given rule entries, using the bundle name when it is
+  /// unique. Otherwise, falls back to a name based on the target label.
+  private func generateUniqueNamesForRuleEntries(_ ruleEntries: Set<RuleEntry>) -> [String: RuleEntry] {
+    var named = [String: RuleEntry]()
+    // Try to name using the bundle names first, then the target name.
+    var unnamed = self.uniqueNames(for: ruleEntries, named: &named) { $0.bundleName }
+    unnamed = self.uniqueNames(for: unnamed, named: &named) {
+      $0.label.targetName
+    }
+
+    // Continue only if we need to de-duplicate.
+    guard !unnamed.isEmpty else {
+      return named
+    }
+
+    // Special handling for the remaining unnamed entries - use their full target label.
+    let conflictingFullNames = Set(unnamed.map {
+      $0.label.asFullPBXTargetName!
+    })
+
+    // Try to strip out a common prefix if we can find one.
+    let commonPrefix = self.longestCommonPrefix(conflictingFullNames, separator: "-")
+
+    guard !commonPrefix.isEmpty else {
+      for entry in unnamed {
+        let fullName = entry.label.asFullPBXTargetName!
+        named[fullName] = entry
+      }
+      return named
+    }
+
+    // Found a common prefix, we can strip it as long as we don't cause a new duplicate.
+    let charsToDrop = commonPrefix.count
+    for entry in unnamed {
+      let fullName = entry.label.asFullPBXTargetName!
+      let shortenedFullName = String(fullName.dropFirst(charsToDrop))
+      guard !shortenedFullName.isEmpty && named.index(forKey: shortenedFullName) == nil else {
+        named[fullName] = entry
+        continue
+      }
+      named[shortenedFullName] = entry
+    }
+
+    return named
   }
 
   /// Adds the given file targets to a versioned group.
@@ -1161,13 +1263,14 @@ final class PBXTargetGenerator: PBXTargetGeneratorProtocol {
   private func updateTestTarget(_ target: PBXNativeTarget,
                                 withLinkageToHostTarget hostTarget: PBXNativeTarget?,
                                 ruleEntry: RuleEntry,
-                                ruleEntryMap: RuleEntryMap) {
+                                ruleEntryMap: RuleEntryMap,
+                                pathFilters: Set<String>?) {
     // If the test target has a test host, check that it was included in the Tulsi configuration.
     if let hostTarget = hostTarget {
       project.linkTestTarget(target, toHostTarget: hostTarget)
     }
     updateTestTargetIndexer(target, ruleEntry: ruleEntry, hostTarget: hostTarget, ruleEntryMap: ruleEntryMap)
-    updateTestTargetBuildPhases(target, ruleEntry: ruleEntry, ruleEntryMap: ruleEntryMap)
+    updateTestTargetBuildPhases(target, ruleEntry: ruleEntry, ruleEntryMap: ruleEntryMap, pathFilters: pathFilters)
   }
 
   /// Updates the test target indexer with test specific values.
@@ -1192,9 +1295,14 @@ final class PBXTargetGenerator: PBXTargetGeneratorProtocol {
 
   private func updateTestTargetBuildPhases(_ target: PBXNativeTarget,
                                            ruleEntry: RuleEntry,
-                                           ruleEntryMap: RuleEntryMap) {
-    let testSourceFileInfos = ruleEntry.sourceFiles
-    let testNonArcSourceFileInfos = ruleEntry.nonARCSourceFiles
+                                           ruleEntryMap: RuleEntryMap,
+                                           pathFilters: Set<String>?) {
+    let includePathInProject = pathFilterFunc(pathFilters)
+    func includeFileInProject(_ info: BazelFileInfo) -> Bool {
+      return includePathInProject(info.fullPath)
+    }
+    let testSourceFileInfos = ruleEntry.sourceFiles.filter(includeFileInProject)
+    let testNonArcSourceFileInfos = ruleEntry.nonARCSourceFiles.filter(includeFileInProject)
     let containsSwift = ruleEntry.attributes[.has_swift_dependency] as? Bool ?? false
 
     // For the Swift dummy files phase to work, it has to be placed before the Compile Sources build
@@ -1226,38 +1334,22 @@ final class PBXTargetGenerator: PBXTargetGeneratorProtocol {
                            toSet includes: NSMutableOrderedSet) {
     if let includePaths = ruleEntry.includePaths {
       let rootedPaths: [String] = includePaths.map() { (path, recursive) in
-        let rootedPath = "$(\(PBXTargetGenerator.WorkspaceRootVarName))/\(path)"
+        // Any paths of the tulsi-includes form will only be in the bazel workspace symlink since
+        // they refer to generated files from a build.
+        // Otherwise we assume the file exists in the workspace.
+        let prefixVar: String
+        if path.hasPrefix(PBXTargetGenerator.externalPrefix) || path.hasPrefix(PBXTargetGenerator.tulsiIncludesPath) {
+          prefixVar = PBXTargetGenerator.BazelWorkspaceSymlinkVarName
+        } else {
+          prefixVar = PBXTargetGenerator.WorkspaceRootVarName
+        }
+        let rootedPath = "$(\(prefixVar))/\(path)"
         if recursive {
           return "\(rootedPath)/**"
         }
         return rootedPath
       }
       includes.addObjects(from: rootedPaths)
-
-      /// Some targets that generate sources also provide header search paths into non-generated
-      /// sources. Using workspace root is needed for the former, but the latter has to be
-      /// included via the Bazel workspace root.
-      /// TODO(tulsi-team): See if we can merge the two locations to just Bazel workspace.
-      let bazelWorkspaceRootedPaths: [String] = includePaths.map() { (path, recursive) in
-        let rootedPath = "$(\(PBXTargetGenerator.BazelWorkspaceSymlinkVarName))/\(path)"
-        if recursive {
-          return "\(rootedPath)/**"
-        }
-        return rootedPath
-      }
-      includes.addObjects(from: bazelWorkspaceRootedPaths)
-    }
-
-    // TODO(rdar://36107040): Once Xcode supports indexing with multiple -fmodule-map-file
-    // arguments, remove this in favor of "-Xcc -fmodule-map-file=<>" below.
-    //
-    // Include the ObjC modules in HEADER_SEARCH_PATHS in order to fix issues regarding
-    // explicitly passing them via -fmodule-map-file: Xcode 8 seems to ignore the
-    // -fmodule-map-file flag when using SourceKit for CMD+click and Xcode 9 seems to only
-    // pass in the last -fmodule-map-file flag given.
-    for moduleMap in ruleEntry.objCModuleMaps {
-      let fullPath = (moduleMap.fullPath as NSString).deletingLastPathComponent
-      includes.add("$(\(PBXTargetGenerator.BazelWorkspaceSymlinkVarName))/\(fullPath)")
     }
   }
 
@@ -1384,17 +1476,6 @@ final class PBXTargetGenerator: PBXTargetGeneratorProtocol {
     }
 
     return testSettings
-  }
-
-  // Resolves a BuildLabel to an existing PBXTarget, handling target name collisions.
-  private func projectTargetForLabel(_ label: BuildLabel) -> PBXTarget? {
-    guard let targetName = label.targetName else { return nil }
-    if let target = project.targetByName[targetName] {
-      return target
-    }
-
-    guard let fullTargetName = label.asFullPBXTargetName else { return nil }
-    return project.targetByName[fullTargetName]
   }
 
   // Adds a dummy build configuration to the given list based off of the Debug config that is
@@ -1557,7 +1638,7 @@ final class PBXTargetGenerator: PBXTargetGeneratorProtocol {
     buildSettings["TULSI_BUILD_PATH"] = entry.label.packageName!
 
 
-    buildSettings["PRODUCT_NAME"] = entry.bundleName ?? name
+    buildSettings["PRODUCT_NAME"] = name
     if let bundleID = entry.bundleID {
       buildSettings["PRODUCT_BUNDLE_IDENTIFIER"] = bundleID
     }
@@ -1579,6 +1660,13 @@ final class PBXTargetGenerator: PBXTargetGeneratorProtocol {
     if pbxTargetType == .Watch1App {
       buildSettings["TARGETED_DEVICE_FAMILY"] = "4"
       buildSettings["TARGETED_DEVICE_FAMILY[sdk=iphonesimulator*]"] = "1,4"
+    }
+
+    // App clips are improperly signed by Xcode when using the legacy build system even with
+    // CODE_SIGNING_REQUIRED=NO so disable code signing and let bazel_build.py do the necessary
+    // signing.
+    if pbxTargetType == .AppClip {
+      buildSettings["CODE_SIGNING_ALLOWED"] = "NO"
     }
 
     // bazel_build.py uses this to determine if it needs to pass the --xcode_version flag, as the

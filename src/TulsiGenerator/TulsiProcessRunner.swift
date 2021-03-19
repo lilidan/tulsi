@@ -32,16 +32,12 @@ public final class TulsiProcessRunner {
   /// output and passing it to a terminationHandler.
   static func createProcess(_ launchPath: String,
                             arguments: [String],
-                            environment: [String: String]? = nil,
+                            environment: [String: String] = [:],
                             messageLogger: LocalizedMessageLogger? = nil,
                             loggingIdentifier: String? = nil,
                             terminationHandler: @escaping CompletionHandler) -> Process {
-
-    var env = defaultEnvironment
-    if let environment = environment {
-      for (key, value) in environment {
-        env[key] = value
-      }
+    let env = environment.merging(defaultEnvironment) { (current, _) in
+      return current
     }
     return ProcessRunner.createProcess(launchPath,
                                        arguments: arguments,
