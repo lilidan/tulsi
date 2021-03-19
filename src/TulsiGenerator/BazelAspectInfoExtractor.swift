@@ -16,7 +16,7 @@ import Foundation
 
 
 // Provides methods utilizing Bazel aspects to extract information from a workspace.
-final class BazelAspectInfoExtractor: QueuedLogging {
+final public class BazelAspectInfoExtractor: QueuedLogging {
   enum ExtractorError: Error {
     /// Failed to build aspects.
     case buildFailed
@@ -33,7 +33,6 @@ final class BazelAspectInfoExtractor: QueuedLogging {
   /// Stores Tulsi-specific Bazel settings.
   let bazelSettingsProvider: BazelSettingsProviderProtocol
 
-  private let bundle: Bundle
   /// Absolute path to the workspace containing the Tulsi aspect bzl file.
   private let aspectWorkspacePath: String
   private let localizedMessageLogger: LocalizedMessageLogger
@@ -44,7 +43,7 @@ final class BazelAspectInfoExtractor: QueuedLogging {
 
   private typealias CompletionHandler = (Process, String) -> Void
 
-  init(bazelURL: URL,
+  public init(bazelURL: URL,
        workspaceRootURL: URL,
        executionRootURL: URL,
        bazelSettingsProvider: BazelSettingsProviderProtocol,
@@ -59,8 +58,7 @@ final class BazelAspectInfoExtractor: QueuedLogging {
     self.buildEventsFilePath =
         (NSTemporaryDirectory() as NSString).appendingPathComponent(buildEventsFileName)
 
-    bundle = Bundle(for: type(of: self))
-
+    let bundle = Bundle(for: type(of: self))
     let workspaceFilePath = bundle.path(forResource: "WORKSPACE", ofType: "")! as NSString
     aspectWorkspacePath = workspaceFilePath.deletingLastPathComponent
   }
@@ -240,6 +238,9 @@ final class BazelAspectInfoExtractor: QueuedLogging {
                                                    messageLogger: localizedMessageLogger,
                                                    loggingIdentifier: "bazel_extract_source_info") {
       completionInfo in
+        // Write bazel output to standard error
+        FileHandle.standardError.write(completionInfo.stderr)
+
         let debugInfoFormatString = NSLocalizedString("DebugInfoForBazelCommand",
                                                       bundle: Bundle(for: type(of: self)),
                                                       comment: "Provides general information about a Bazel failure; a more detailed error may be reported elsewhere. The Bazel command is %1$@, exit code is %2$d, stderr %3$@.")

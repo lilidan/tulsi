@@ -99,13 +99,13 @@ public enum BazelSettingFeature: Hashable, Pythonable {
     }
   }
 
-  func toPython(_ indentation: String) -> String {
+  public func toPython(_ indentation: String) -> String {
     return stringValue.toPython(indentation)
   }
 }
 
 /// Defines an object that provides flags for Bazel invocations.
-protocol BazelSettingsProviderProtocol {
+public protocol BazelSettingsProviderProtocol {
   /// Universal flags for all Bazel invocations.
   var universalFlags: BazelFlags { get }
 
