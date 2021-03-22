@@ -759,7 +759,7 @@ class BazelBuildBridge(object):
           output_line = '%s: %s' % (xcode_label, match.group(2))
       return output_line
 
-    patch_xcode_parsable_line = PatchBazelWarningStatements
+#    patch_xcode_parsable_line = PatchBazelWarningStatements
     # Always patch outputs for XCHammer.
     # if self.workspace_root != self.project_dir:
     if True:
