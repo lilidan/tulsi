@@ -1009,11 +1009,7 @@ def _tulsi_sources_aspect(target, ctx):
         swift_transitive_modules = swift_transitive_modules.to_list()
         objc_module_maps = objc_module_maps.to_list()
         test_deps = None
-
-        if SwiftInfo in target:
-            module_name = target[SwiftInfo].module_name
-        else:
-            module_name = None
+        module_name = None
 
     info = _struct_omitting_none(
         artifacts = artifacts,
