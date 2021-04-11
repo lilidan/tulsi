@@ -1,10 +1,19 @@
 build --cpu=darwin_x86_64
 build --apple_platform_type=macos
 
+build --features=debug_prefix_map_pwd_is_dot
+build --features=swift.cacheable_swiftmodules
+build --features=swift.debug_prefix_map
+build --features=swift.enable_vfsoverlays
+build --strategy=Genrule=standalone
+
 # Disable the Swift compilation worker when running integration tests, since it
 # requires the protobuf dependency which is infeasible to get working on Bazel.
 build --define=RULES_SWIFT_BUILD_DUMMY_WORKER=1
 build --strategy=SwiftCompile=local
+build --features=debug_prefix_map_pwd_is_dot
+build --copt=-fdebug-compilation-dir
+build --apple_generate_dsym
 
 # This is required for re-invoking bazel in shell tests. CI adds it implicitly
 test --test_env=HOME
