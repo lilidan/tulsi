@@ -101,6 +101,7 @@ struct HeadlessXcodeProjectGenerator {
               "\tBazel at '\(config.bazelURL.path)'.\n" +
               "This may take a while.")
 
+    config.generateByQuery = arguments.fast
     let result = TulsiGeneratorConfigDocument.generateXcodeProjectInFolder(outputFolderURL,
                                                                            withGeneratorConfig: config,
                                                                            workspaceRootURL: workspaceRootURL,

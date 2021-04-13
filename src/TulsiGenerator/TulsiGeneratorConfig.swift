@@ -68,6 +68,8 @@ public class TulsiGeneratorConfig {
     return bazelURLValue.value
   }
 
+  public var generateByQuery: Bool = false
+    
   static let ProjectNameKey = "projectName"
   static let BuildTargetsKey = "buildTargets"
   static let PathFiltersKey = "sourceFilters"

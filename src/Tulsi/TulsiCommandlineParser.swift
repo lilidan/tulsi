@@ -42,6 +42,7 @@ class TulsiCommandlineParser {
     let buildOptions: String?
     let buildTargets: [String]?
     let logToFile: Bool
+    let fast: Bool
 
     init() {
       bazel = nil
@@ -56,6 +57,7 @@ class TulsiCommandlineParser {
       buildOptions = nil
       buildTargets = nil
       logToFile = false
+      fast = false
     }
 
     init(dict: [String: Any]) {
@@ -87,6 +89,7 @@ class TulsiCommandlineParser {
       buildOptions = dict[TulsiCommandlineParser.ParamBuildOptions] as? String
       buildTargets = dict[TulsiCommandlineParser.ParamBuildTargetLong] as? [String]
       logToFile = dict[TulsiCommandlineParser.ParamLogToFile] as? Bool == true
+      fast = dict[TulsiCommandlineParser.ParamFast] as? Bool == true
     }
   }
 
@@ -109,6 +112,8 @@ class TulsiCommandlineParser {
   static let ParamAdditionalPathFilters = "--additionalSourceFilters"
   static let ParamBazel = "--bazel"
 
+  static let ParamFast = "--fast"
+    
   // Xcode project generation mode:
   static let ParamGeneratorConfigShort = "-c"
   static let ParamGeneratorConfigLong = "--genconfig"
@@ -187,6 +192,8 @@ class TulsiCommandlineParser {
           parsedArguments[TulsiCommandlineParser.ParamVerboseLong] = true as AnyObject?
         case TulsiCommandlineParser.ParamQuietShort:
           fallthrough
+        case TulsiCommandlineParser.ParamFast:
+          parsedArguments[TulsiCommandlineParser.ParamFast] = true as AnyObject?
         case TulsiCommandlineParser.ParamQuietLong:
           parsedArguments[TulsiCommandlineParser.ParamQuietLong] = true as AnyObject?
 

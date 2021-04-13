@@ -22,7 +22,7 @@ public final class TulsiProjectInfoExtractor {
   }
   private let project: TulsiProject
   private let localizedMessageLogger: LocalizedMessageLogger
-  var workspaceInfoExtractor: BazelWorkspaceInfoExtractorProtocol
+  var workspaceInfoExtractor: BazelWorkspaceInfoExtractor
 
   public var bazelURL: URL {
     get { return workspaceInfoExtractor.bazelURL as URL }

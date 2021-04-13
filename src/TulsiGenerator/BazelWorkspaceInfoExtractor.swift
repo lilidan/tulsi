@@ -17,7 +17,7 @@ import Foundation
 
 // Concrete extractor that utilizes Bazel query (http://bazel.build/docs/query.html) and aspects to
 // extract information from a workspace.
-public final class BazelWorkspaceInfoExtractor: BazelWorkspaceInfoExtractorProtocol {
+public final class BazelWorkspaceInfoExtractor {
   var bazelURL: URL {
     get { return queryExtractor.bazelURL as URL }
     set {
@@ -93,7 +93,7 @@ public final class BazelWorkspaceInfoExtractor: BazelWorkspaceInfoExtractorProto
   func extractRuleInfoFromProject(_ project: TulsiProject) -> [RuleInfo] {
     return queryExtractor.extractTargetRulesFromPackages(project.bazelPackages)
   }
-
+    
   public func ruleEntriesForLabels(_ labels: [BuildLabel],
                             startupOptions: TulsiOption,
                             extraStartupOptions: TulsiOption,
@@ -102,7 +102,9 @@ public final class BazelWorkspaceInfoExtractor: BazelWorkspaceInfoExtractorProto
                             platformConfigOption: TulsiOption,
                             prioritizeSwiftOption: TulsiOption,
                             use64BitWatchSimulatorOption: TulsiOption,
-                            features: Set<BazelSettingFeature>) throws -> RuleEntryMap {
+                            features: Set<BazelSettingFeature>,
+                            generateByQuery:Bool = false
+                            ) throws -> RuleEntryMap {
     func isLabelMissing(_ label: BuildLabel) -> Bool {
       return !ruleEntryCache.hasAnyRuleEntry(withBuildLabel: label)
     }
@@ -126,14 +128,20 @@ public final class BazelWorkspaceInfoExtractor: BazelWorkspaceInfoExtractorProto
     }
 
     do {
-      let ruleEntryMap =
-        try aspectExtractor.extractRuleEntriesForLabels(labels,
-                                                        startupOptions: startupOptions,
-                                                        buildOptions: buildOptions,
-                                                        compilationMode: compilationMode,
-                                                        platformConfig: platformConfig,
-                                                        prioritizeSwift: prioritizeSwift,
-                                                        features: features)
+        
+        let ruleEntryMap:RuleEntryMap
+        if generateByQuery {
+            ruleEntryMap = try queryExtractor.extractRuleEntriesfromTargets(labels)
+        }else{
+            ruleEntryMap = try aspectExtractor.extractRuleEntriesForLabels(labels,
+                                                             startupOptions: startupOptions,
+                                                             buildOptions: buildOptions,
+                                                             compilationMode: compilationMode,
+                                                             platformConfig: platformConfig,
+                                                             prioritizeSwift: prioritizeSwift,
+                                                             features: features)
+        }
+        
       ruleEntryCache = RuleEntryMap(ruleEntryMap)
     } catch BazelAspectInfoExtractor.ExtractorError.buildFailed {
       throw BazelWorkspaceInfoExtractorError.aspectExtractorFailed("Bazel aspects could not be built.")

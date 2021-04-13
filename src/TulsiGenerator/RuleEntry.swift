@@ -141,6 +141,8 @@ public final class RuleEntry: RuleInfo {
       "macos_command_line_application": PBXTarget.ProductType.Tool,
       "objc_library": PBXTarget.ProductType.StaticLibrary,
       "swift_library": PBXTarget.ProductType.StaticLibrary,
+      "ios_application": PBXTarget.ProductType.Application,
+      "ios_framework":PBXTarget.ProductType.Framework,
   ]
 
   /// Keys for a RuleEntry's attributes map. Definitions may be found in the Bazel Build

@@ -46,6 +46,45 @@ final class BazelQueryInfoExtractor: QueuedLogging {
     self.localizedMessageLogger = localizedMessageLogger
   }
 
+    
+    /// Extracts all of the transitive BUILD and skylark (.bzl) files used by the given targets.
+    func extractRuleEntriesfromTargets<T: Collection>(_ targets: T) -> RuleEntryMap where T.Iterator.Element == BuildLabel
+    {
+      if targets.isEmpty { return RuleEntryMap() }
+
+      let profilingStart = localizedMessageLogger.startProfiling("extracting_rule_entrys_by_query",
+                                                                 message: "Finding rule entrys for \(targets.count) rules")
+
+
+      let query = targets.map({ "kind(rule, deps(\($0.value)))"}).joined(separator: "+")
+      let entryMap: RuleEntryMap
+      do {
+        // Errors in the BUILD structure being examined should not prevent partial extraction, so this
+        // command is considered successful if it returns any valid data at all.
+        let (_, data, _, debugInfo) = try self.bazelSynchronousQueryProcess(query,
+                                                                             outputKind: "xml",
+                                                                            additionalArguments: ["--keep_going"],
+                                                                            loggingIdentifier: "bazel_query_extracting_skylark_files")
+        self.queuedInfoMessages.append(debugInfo)
+
+        if let ruleEntries = try extractRuleEntriesFromXMLOutput(data) {
+            entryMap = ruleEntries
+        } else {
+          localizedMessageLogger.warning("BazelBuildfilesQueryFailed",
+                                         comment: "Bazel 'rule' query failed to extract information.")
+            entryMap = RuleEntryMap()
+        }
+
+        localizedMessageLogger.logProfilingEnd(profilingStart)
+      } catch {
+        // Error will be displayed at the end of project generation.
+        return RuleEntryMap()
+      }
+
+      return entryMap
+    }
+
+    
   func extractTargetRulesFromPackages(_ packages: [String]) -> [RuleInfo] {
     guard !packages.isEmpty else {
       return []
@@ -61,7 +100,7 @@ final class BazelQueryInfoExtractor: QueuedLogging {
                                                 outputKind: "xml",
                                                 loggingIdentifier: "bazel_query_fetch_rules")
       if process.terminationStatus != 0 {
-        showExtractionError(debugInfo, stderr: stderr, displayLastLineIfNoErrorLines: true)
+         showExtractionError(debugInfo, stderr: stderr, displayLastLineIfNoErrorLines: true)
       } else if let entries = self.extractRuleInfosFromBazelXMLOutput(data) {
         infos = entries
       }
@@ -317,7 +356,230 @@ final class BazelQueryInfoExtractor: QueuedLogging {
       return nil
     }
   }
+    
+private func extractRuleEntriesFromXMLOutput(_ bazelOutput: Data) throws ->  RuleEntryMap? {
+    let profile = localizedMessageLogger.startProfiling("xml_decode_for_entries",message: "xml_decode_for_entries")
+    let doc = try XMLDocument(data: bazelOutput, options: XMLNode.Options(rawValue: 0))
+    
+    localizedMessageLogger.logProfilingEnd(profile)
+        
+    let rules = try doc.nodes(forXPath: "/query/rule")
+    
+    let ruleEntryMap = RuleEntryMap(localizedMessageLogger: localizedMessageLogger)
 
+    for ruleNode in rules {
+      guard let ruleElement = ruleNode as? XMLElement else {
+        localizedMessageLogger.error("BazelResponseXMLNonElementType",comment: "")
+        continue
+      }
+      guard let ruleLabel = ruleElement.attribute(forName: "name")?.stringValue else {
+        localizedMessageLogger.error("BazelResponseMissingRequiredAttribute",comment: "Bazel response XML element %1$@ was found but was missing an attribute named %2$@.",values: ruleElement, "name")
+        continue
+      }
+      guard let ruleType = ruleElement.attribute(forName: "class")?.stringValue else {
+        localizedMessageLogger.error("BazelResponseMissingRequiredAttribute",comment: "Bazel response XML element %1$@ was found but was missing an attribute named %2$@.",values: ruleElement, "class")
+        continue
+      }
+      
+      guard let location = ruleElement.attribute(forName: "location")?.stringValue else {
+        localizedMessageLogger.error("BazelResponseMissingRequiredAttribute",comment: "Bazel response XML element %1$@ was found but was missing an attribute named %2$@.",values: ruleElement, "location")
+        continue
+      }
+      
+      var stringAttributes =  [String:String]()
+      var labelAttributes = [String:BuildLabel]()
+      var listAttributes = [String:[BuildLabel]]()
+
+      let stringNodes = try ruleElement.nodes(forXPath: "./string")
+      for attrNode in stringNodes {
+          guard let attrElement = attrNode as? XMLElement else {
+            localizedMessageLogger.error("BazelResponseXMLNonElementType",comment: " String parser")
+            continue
+          }
+          if let name = attrElement.attribute(forName: "name")?.stringValue,let value =  attrElement.attribute(forName: "value")?.stringValue{
+            stringAttributes[name] = value
+          }
+      }
+    
+      let labelNodes = try ruleElement.nodes(forXPath: "./label")
+      for attrNode in labelNodes {
+            guard let attrElement = attrNode as? XMLElement else {
+              localizedMessageLogger.error("BazelResponseXMLNonElementType",comment: " Label parser")
+              continue
+            }
+            if let name = attrElement.attribute(forName: "name")?.stringValue,let value =  attrElement.attribute(forName: "value")?.stringValue{
+                labelAttributes[name] = BuildLabel(value)
+            }
+      }
+        
+        let listNodes = try ruleElement.nodes(forXPath: "./list")
+        for attrNode in listNodes{
+            guard let attrElement = attrNode as? XMLElement else {
+              localizedMessageLogger.error("BazelResponseXMLNonElementType",comment: " list parser")
+              continue
+            }
+        
+            if let name = attrElement.attribute(forName: "name")?.stringValue{
+                var attrSubElementArray = [BuildLabel]()
+                if let subNodes =  attrElement.children{
+                    for subNode in subNodes {
+                        guard let attrSubElement = subNode as? XMLElement else {
+                          localizedMessageLogger.error("BazelResponseXMLNonElementType",comment: " list sub string parser")
+                          continue
+                        }
+                        if let value = attrSubElement.attribute(forName: "value")?.stringValue{
+                            attrSubElementArray.append(BuildLabel(value))
+                        }
+                    }
+                }
+                listAttributes[name] = attrSubElementArray
+            }
+        }
+        
+        
+        func MakeBazelFileInfos(_ attributeName: String) -> [BazelFileInfo] {
+          let infos = listAttributes[attributeName] ?? []
+          var bazelFileInfos = [BazelFileInfo]()
+          for info in infos {
+            let wrapInfo = ["path":info.asFileName,"src":true] as [String:AnyObject]
+            if let pathInfo = BazelFileInfo(info: wrapInfo as AnyObject?) {
+              bazelFileInfos.append(pathInfo)
+            }
+          }
+          return bazelFileInfos
+        }
+        
+        
+        func makeBazelFileInfoDescription(_ attributeName: String) -> [[String: AnyObject]] {
+            let infos = listAttributes[attributeName] ?? []
+            var bazelFileInfos = [[String: AnyObject]]()
+            for info in infos {
+               let wrapInfo = ["path":info.asFileName,"src":true] as [String:AnyObject]
+               bazelFileInfos.append(wrapInfo)
+            }
+            return bazelFileInfos
+        }
+        
+        func makeSingleBazelFileInfoDescription(_ attributeName: String) -> [[String: AnyObject]] {
+            if let info = labelAttributes[attributeName] {
+                let wrapInfo = ["path":info.asFileName,"src":true] as [String:AnyObject]
+                return [wrapInfo]
+            }else{
+                return []
+            }
+        }
+        
+    
+        //
+        let includePaths: [RuleEntry.IncludePath]?
+        if let includes = listAttributes["includes"] as? [BuildLabel] {
+          includePaths = includes.compactMap() {
+            if let fileName = $0.asFileName{
+                return RuleEntry.IncludePath(fileName, false)
+            }
+            return nil
+          }
+        } else {
+          includePaths = nil
+        }
+        
+        //
+        let strings = location.components(separatedBy:":")
+        var buildFilePath:String = ""
+        if strings.count == 3 {
+            buildFilePath = strings[0]
+            let projectDir = workspaceRootURL.path
+            if buildFilePath.contains(projectDir) {
+                buildFilePath = buildFilePath.replacingOccurrences(of: projectDir, with: "")
+                if buildFilePath.hasPrefix("/") {
+                    buildFilePath.removeFirst()
+                }
+            }
+        }
+        
+        var has_swift_info = false
+        if let srcs = listAttributes["srcs"] {
+            for src in srcs{
+                if src.value.hasSuffix(".swift") {
+                    has_swift_info = true
+                    break
+                }
+            }
+        }
+        
+        let copts:[String]
+        if let coptsObj = listAttributes["copts"]{
+            copts = coptsObj.map({$0.value})
+        }else{
+            copts = []
+        }
+        
+        let defines:[String]
+        if let definesObj = listAttributes["defines"]{
+            defines = definesObj.map({$0.value})
+        }else{
+            defines = []
+        }
+        
+        
+        
+        let isFileGroup = ruleType == "filegroup"
+        
+        if isFileGroup {
+            print("")
+        }
+        let supportedfiles:[[String: AnyObject]] = isFileGroup ? makeBazelFileInfoDescription("srcs") : [[String: AnyObject]]()
+        
+//        let supportedfiles:[[String: AnyObject]] = makeBazelFileInfoDescription("data") + makeBazelFileInfoDescription("resources") + makeBazelFileInfoDescription("infoplists") + makeSingleBazelFileInfoDescription("src") + makeSingleBazelFileInfoDescription("entitlements")
+        
+        let attrs:[String: AnyObject] = [RuleEntry.Attribute.has_swift_info.rawValue:has_swift_info,
+                                         RuleEntry.Attribute.copts.rawValue:copts,
+                                         RuleEntry.Attribute.supporting_files.rawValue:supportedfiles
+                                         ] as [String:AnyObject]
+        
+        let deps = listAttributes["deps"] ?? []
+        let data = listAttributes["data"] ?? []
+        let plists = listAttributes["infoplists"] ?? []
+        let resources = listAttributes["resources"] ?? []
+
+        let ruleEntry = RuleEntry(label: ruleLabel,
+                                  type: ruleType,
+                                  attributes: attrs,
+                                  artifacts: MakeBazelFileInfos("artifacts"),
+                                  sourceFiles: MakeBazelFileInfos("srcs") + MakeBazelFileInfos("hdrs") ,
+                                  nonARCSourceFiles: MakeBazelFileInfos("non_arc_srcs"),
+                                  dependencies:Set(deps+data+plists+resources),
+                                  testDependencies: [],
+                                  frameworkImports: MakeBazelFileInfos("frameworks"),
+                                  secondaryArtifacts: [],
+                                  extensions: [],
+                                  appClips: [],
+                                  bundleID: stringAttributes["bundle_id"],
+                                  bundleName: stringAttributes["name"],
+                                  productType: PBXTarget.ProductType(rawValue: stringAttributes["product_type"] ?? ""),
+                                  platformType: stringAttributes["platform_type"] ?? "ios",
+                                  osDeploymentTarget: stringAttributes["minimum_os_version"] ?? "9.0",
+                                  buildFilePath: buildFilePath,
+                                  objcDefines: has_swift_info ? [] : defines,
+                                  swiftDefines: has_swift_info ? defines : [],
+                                  includePaths: includePaths,
+                                  swiftLanguageVersion: "5.3",
+                                  swiftToolchain: "",
+                                  swiftTransitiveModules: [],
+                                  objCModuleMaps: [],
+                                  moduleName: stringAttributes["moduleName"],
+                                  extensionType: "",
+                                  xcodeVersion: "")
+        ruleEntryMap.insert(ruleEntry: ruleEntry)
+    }
+    
+    return ruleEntryMap
+}
+    
+
+    
+    
+    
   // MARK: - QueuedLogging
 
   func logQueuedInfoMessages() {

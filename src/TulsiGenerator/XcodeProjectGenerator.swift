@@ -87,7 +87,7 @@ final class XcodeProjectGenerator {
   private let config: TulsiGeneratorConfig
   private let localizedMessageLogger: LocalizedMessageLogger
   private let fileManager: FileManager
-  private let workspaceInfoExtractor: BazelWorkspaceInfoExtractorProtocol
+  private let workspaceInfoExtractor: BazelWorkspaceInfoExtractor
   private let resourceURLs: ResourceSourcePathURLs
   private let tulsiVersion: String
   private let customLLDBInitFile: String?
@@ -124,7 +124,7 @@ final class XcodeProjectGenerator {
   init(workspaceRootURL: URL,
        config: TulsiGeneratorConfig,
        localizedMessageLogger: LocalizedMessageLogger,
-       workspaceInfoExtractor: BazelWorkspaceInfoExtractorProtocol,
+       workspaceInfoExtractor: BazelWorkspaceInfoExtractor,
        resourceURLs: ResourceSourcePathURLs,
        tulsiVersion: String,
        fileManager: FileManager = FileManager.default,
@@ -665,7 +665,8 @@ final class XcodeProjectGenerator {
                                                              platformConfigOption: config.options[.ProjectGenerationPlatformConfiguration],
                                                              prioritizeSwiftOption: config.options[.ProjectPrioritizesSwift],
                                                              use64BitWatchSimulatorOption: config.options[.Use64BitWatchSimulator],
-                                                             features: features)
+                                                             features: features,
+                                                             generateByQuery: config.generateByQuery)
     } catch BazelWorkspaceInfoExtractorError.aspectExtractorFailed(let info) {
       throw ProjectGeneratorError.labelAspectFailure(info)
     }
